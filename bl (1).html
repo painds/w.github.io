@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BL Medya - Premium</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bl: { dark: '#020617', panel: '#0f172a', accent: '#3b82f6', gold: '#f59e0b' }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s infinite',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #020617;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(15, 23, 42, 0.3) 0%, transparent 40%);
+            color: #e2e8f0;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        .nav-item { transition: all 0.2s; border-radius: 999px; font-family: 'Outfit', sans-serif; letter-spacing: 0.5px; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+        .nav-item.active { background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: white; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); border: none; }
+        .like-anim:active i { transform: scale(1.4); transition: 0.1s; color: #ec4899; }
+        .post-card { transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .post-card:hover { background: rgba(255,255,255,0.02); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="h-screen flex justify-center text-sm">
+
+    <aside class="hidden lg:flex flex-col w-[280px] h-screen sticky top-0 py-6 px-4 z-20 glass-nav justify-between">
+        <div>
+            <div class="px-4 mb-8 flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-earth-americas text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-display font-bold text-2xl tracking-wide text-white">BL MEDYA</h1>
+                    <p class="text-[10px] text-blue-400 font-mono tracking-widest uppercase">Resmi Platform</p>
+                </div>
+            </div>
+            <nav class="space-y-3">
+                <button onclick="switchTab('global')" id="nav-global" class="nav-item active flex items-center gap-4 px-5 py-3.5 w-full text-left text-gray-400 font-bold text-lg"><i class="fa-solid fa-globe w-6 text-center"></i> Akış</button>
+                <button onclick="switchTab('following')" id="nav-following" class="nav-item flex items-center gap-4 px-5 py-3.5 w-full text-left text-gray-400 font-bold text-lg"><i class="fa-solid fa-user-group w-6 text-center"></i> Takip</button>
+                <button onclick="loadProfile(currentUser.uid)" class="nav-item flex items-center gap-4 px-5 py-3.5 w-full text-left text-gray-400 font-bold text-lg"><i class="fa-solid fa-user w-6 text-center"></i> Profil</button>
+                <button onclick="openVerifyModal()" class="nav-item flex items-center gap-4 px-5 py-3.5 w-full text-left text-gray-400 font-bold text-lg"><i class="fa-solid fa-certificate w-6 text-center text-blue-400"></i> Başvuru</button>
+            </nav>
+            <button onclick="openCreateModal()" class="w-full mt-8 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-bold py-4 rounded-full shadow-xl shadow-blue-600/20 transition transform hover:scale-[1.02] flex items-center justify-center gap-2"><i class="fa-solid fa-pen-nib"></i> <span>GÖNDERİ PAYLAŞ</span></button>
+        </div>
+        <div class="p-3 rounded-2xl hover:bg-white/5 cursor-pointer transition flex items-center gap-3 group border border-transparent hover:border-white/10" onclick="window.doLogout()">
+            <img id="myAvatar" class="w-11 h-11 rounded-full bg-gray-800 object-cover border-2 border-transparent group-hover:border-blue-500 transition shadow-lg">
+            <div class="flex-1 min-w-0">
+                <h4 id="myName" class="font-bold text-white truncate text-base">...</h4>
+                <p class="text-[10px] text-gray-500 truncate flex items-center gap-1"><i class="fa-solid fa-power-off text-red-400"></i> Çıkış Yap</p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="w-full md:w-[600px] lg:w-[680px] h-full relative flex flex-col border-x border-gray-800/50 bg-black/40 backdrop-blur-sm shadow-2xl">
+        <header class="lg:hidden h-16 border-b border-gray-800/50 flex items-center justify-between px-4 bg-black/80 backdrop-blur sticky top-0 z-30">
+            <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center"><i class="fa-solid fa-earth-americas text-white"></i></div>
+            <h2 class="font-display font-bold text-white tracking-widest">BL MEDYA</h2>
+            <img id="mobileAvatar" class="w-9 h-9 rounded-full bg-gray-800 object-cover border border-gray-700" onclick="loadProfile(currentUser.uid)">
+        </header>
+        <div id="feedContainer" class="flex-1 overflow-y-auto pb-20 md:pb-0 scroll-smooth custom-scrollbar"></div>
+        <button onclick="openCreateModal()" class="lg:hidden fixed bottom-20 right-4 w-16 h-16 bg-blue-600 rounded-full text-white shadow-2xl flex items-center justify-center z-40 active:scale-90 transition border-2 border-white/20"><i class="fa-solid fa-feather-pointed text-2xl"></i></button>
+        <nav class="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-black/90 backdrop-blur border-t border-gray-800 z-50 flex justify-around items-center">
+            <button onclick="switchTab('global')" class="text-2xl text-gray-500 hover:text-white transition"><i class="fa-solid fa-globe"></i></button>
+            <button onclick="switchTab('following')" class="text-2xl text-gray-500 hover:text-white transition"><i class="fa-solid fa-user-group"></i></button>
+            <button onclick="loadProfile(currentUser.uid)" class="text-2xl text-gray-500 hover:text-white transition"><i class="fa-solid fa-user"></i></button>
+            <button onclick="openVerifyModal()" class="text-2xl text-blue-500 hover:text-white transition"><i class="fa-solid fa-certificate"></i></button>
+        </nav>
+    </main>
+
+    <aside class="hidden xl:flex flex-col w-[350px] h-screen sticky top-0 p-8 z-20 gap-6">
+        <div class="relative group">
+            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition"></i>
+            <input type="text" placeholder="BL Medya'da Ara" class="w-full bg-gray-900/50 border border-gray-700/50 rounded-full py-3.5 pl-12 pr-4 text-white focus:border-blue-500 focus:bg-gray-900 focus:ring-1 focus:ring-blue-500 outline-none transition shadow-inner">
+        </div>
+        <div class="glass-card p-6 rounded-3xl relative overflow-hidden group cursor-pointer hover:-translate-y-1" onclick="openVerifyModal()">
+            <div class="absolute -right-8 -top-8 text-9xl text-blue-500/10 group-hover:text-blue-500/20 transition duration-500 rotate-12"><i class="fa-solid fa-certificate"></i></div>
+            <h3 class="font-bold text-white text-xl relative z-10 font-display">Hesabını Onayla</h3>
+            <p class="text-sm text-gray-400 mt-2 relative z-10 max-w-[90%] leading-relaxed">Mavi, Sarı veya Kırmızı tik alarak hesabının güvenilirliğini kanıtla.</p>
+            <button class="mt-4 bg-white text-black text-xs font-bold px-6 py-2.5 rounded-full relative z-10 hover:bg-gray-200 transition shadow-lg">Başvur</button>
+        </div>
+        <div class="glass-card p-6 rounded-3xl flex-1 max-h-[400px]">
+            <h3 class="font-bold text-white mb-6 font-display text-lg border-b border-gray-800 pb-2">Kimi Takip Etmeli?</h3>
+            <div id="suggestionsList" class="space-y-4"></div>
+        </div>
+    </aside>
+
+    <div id="createModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-slide-up">
+        <div class="glass-card bg-[#0f172a] w-full max-w-lg rounded-2xl p-6 shadow-2xl relative border border-gray-700">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-4">
+                <button onclick="document.getElementById('createModal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="sendPost()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2 rounded-full text-sm shadow-lg shadow-blue-600/20">Paylaş</button>
+            </div>
+            <div class="flex gap-4">
+                <img id="modalAvatar" class="w-12 h-12 rounded-full bg-gray-800 border border-gray-700">
+                <textarea id="modalPostInput" rows="5" class="flex-1 bg-transparent text-xl text-white placeholder-gray-500 outline-none resize-none font-light" placeholder="Neler oluyor?"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div id="verifyModal" class="hidden fixed inset-0 z-[65] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-slide-up">
+        <div class="glass-card bg-[#0f172a] w-full max-w-md rounded-3xl p-8 relative text-center border border-blue-500/20 shadow-[0_0_50px_rgba(59,130,246,0.1)]">
+            <button onclick="document.getElementById('verifyModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            <div class="mb-6 inline-block p-4 rounded-full bg-blue-500/10"><i class="fa-solid fa-certificate text-5xl text-blue-500"></i></div>
+            <h3 class="text-2xl font-bold text-white mb-2 font-display">Doğrulama Başvurusu</h3>
+            <p class="text-gray-400 text-sm mb-6 leading-relaxed">Hesap türünüz (Mavi/Sarı/Kırmızı) yöneticiler tarafından incelenerek belirlenir.</p>
+            <textarea id="verifyReason" rows="3" class="w-full bg-black/50 border border-gray-700 rounded-xl p-4 text-white outline-none mb-4 focus:border-blue-500 transition" placeholder="Neden onaylanmalısınız?"></textarea>
+            <button onclick="submitVerify()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-600/30 transition">Başvuruyu Gönder</button>
+        </div>
+    </div>
+
+    <div id="editProfileModal" class="hidden fixed inset-0 z-[65] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="glass-card bg-[#0f172a] w-full max-w-md rounded-2xl p-6 relative">
+            <button onclick="document.getElementById('editProfileModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="text-xl font-bold text-white mb-6 font-display">Profili Düzenle</h3>
+            <div class="space-y-4">
+                <input id="editName" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition" placeholder="İsim">
+                <input id="editAvatar" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white outline-none focus:border-blue-500 transition text-sm font-mono" placeholder="Avatar URL">
+                <textarea id="editBio" rows="3" class="w-full bg-black/50 border border-gray-700 rounded-xl p-3 text-white outline-none resize-none focus:border-blue-500 transition" placeholder="Biyografi"></textarea>
+                <button onclick="saveProfile()" class="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition">Değişiklikleri Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="hidden fixed inset-0 z-[70] bg-black/95 backdrop-blur-md flex justify-center overflow-y-auto">
+        <div class="w-full max-w-2xl min-h-screen border-x border-gray-800 flex flex-col bg-[#020617]">
+            <div class="sticky top-0 bg-black/80 backdrop-blur border-b border-gray-800 h-16 flex items-center px-4 z-10">
+                <button onclick="closeDetailModal()" class="w-10 h-10 rounded-full hover:bg-gray-800 flex items-center justify-center text-white mr-4 transition"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 class="font-bold text-white text-lg font-display">Gönderi Detayı</h3>
+            </div>
+            <div id="detailContent" class="p-6 flex-1">
+                <div id="mainPostArea"></div>
+                <div class="border-t border-gray-800 my-6 pt-6">
+                    <h4 class="text-sm font-bold text-gray-500 uppercase mb-4">Yanıtlar</h4>
+                    <div id="commentsArea" class="space-y-6 pb-20"></div>
+                </div>
+            </div>
+            <div class="sticky bottom-0 bg-black border-t border-gray-800 p-4">
+                <div class="flex gap-3 items-end">
+                    <img id="commentAvatar" class="w-10 h-10 rounded-full bg-gray-800 object-cover">
+                    <div class="flex-1 relative">
+                        <textarea id="commentInput" rows="1" class="w-full bg-gray-900 rounded-2xl pl-4 pr-12 py-3 text-white outline-none focus:ring-2 ring-blue-500 resize-none overflow-hidden" placeholder="Yanıtını gönder..."></textarea>
+                        <button onclick="sendComment()" class="absolute right-2 bottom-2 w-8 h-8 bg-blue-600 rounded-full text-white flex items-center justify-center hover:bg-blue-500 transition"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="badgeInfoModal" class="hidden fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="glass-card bg-gray-900 w-full max-w-sm p-8 rounded-3xl text-center relative border border-gray-700">
+            <button onclick="document.getElementById('badgeInfoModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400"><i class="fa-solid fa-xmark"></i></button>
+            <div id="badgeModalIcon" class="text-6xl mb-6 scale-110"></div>
+            <h3 id="badgeModalTitle" class="text-2xl font-bold text-white mb-3 font-display"></h3>
+            <p id="badgeModalDesc" class="text-gray-400 text-sm leading-relaxed"></p>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[90] hidden bg-blue-600 text-white px-8 py-4 rounded-full shadow-2xl font-bold transition-all duration-300 transform translate-y-10 opacity-0 flex items-center gap-3"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, addDoc, updateDoc, arrayUnion, arrayRemove, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBlirRiiNPpdqmTAmq6DsSq8mCUlgBHgVc",
+            authDomain: "lilemir-new.firebaseapp.com",
+            databaseURL: "https://lilemir-new-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lilemir-new",
+            storageBucket: "lilemir-new.firebasestorage.app",
+            messagingSenderId: "339863121380",
+            appId: "1:339863121380:web:123195552e821b085e6bf1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        window.currentUser = null;
+        let feedUnsub = null;
+        let activeTab = 'global';
+        let currentDetailId = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if (snap.exists()) {
+                    window.currentUser = { ...snap.data(), id: user.uid };
+                    setupUI();
+                    loadFeed();
+                    loadSuggestions();
+                } else { window.location.href = 'mm (2).html'; }
+            } else { window.location.href = 'mm (2).html'; }
+        });
+
+        function setupUI() {
+            const avatar = currentUser.avatar || `https://ui-avatars.com/api/?name=${currentUser.username}`;
+            document.querySelectorAll('#myAvatar, #mobileAvatar, #modalAvatar, #commentAvatar').forEach(el => el.src = avatar);
+            document.getElementById('myName').innerText = currentUser.username;
+        }
+
+        // --- ROZET (BADGE) SİSTEMİ ---
+        function getBadgeHTML(badgeStr) {
+            if(!badgeStr) return '';
+            let i='', c='', t='', d='';
+            
+            // Sıralama önemlidir
+            if(badgeStr.includes('Kırmızı') || badgeStr.includes('Kirmizi')) { i='fa-shield-halved'; c='text-red-500'; t='Protokol'; d='Cumhurbaşkanlığı veya üst düzey yetkili.'; }
+            else if(badgeStr.includes('Sarı') || badgeStr.includes('Sari')) { i='fa-certificate'; c='text-yellow-500'; t='Resmi Hesap'; d='Devlet vatandaşı veya resmi kurum hesabı.'; }
+            else if(badgeStr.includes('Mavi')) { i='fa-circle-check'; c='text-blue-500'; t='Onaylanmış'; d='Bu hesap orijinal ve doğrulanmış kişi/kurum.'; }
+            else return '';
+
+            return `<i class="fa-solid ${i} ${c} ml-1.5 cursor-pointer text-[15px] hover:scale-110 transition" onclick="event.stopPropagation(); showBadgeInfo('${i} ${c}', '${t}', '${d}')"></i>`;
+        }
+
+        window.showBadgeInfo = (icon, title, desc) => {
+            document.getElementById('badgeModalIcon').innerHTML = `<i class="fa-solid ${icon}"></i>`;
+            document.getElementById('badgeModalTitle').innerText = title;
+            document.getElementById('badgeModalDesc').innerText = desc;
+            document.getElementById('badgeInfoModal').classList.remove('hidden');
+        };
+
+        // --- AKIŞ (FEED) ---
+        window.switchTab = (tab) => {
+            activeTab = tab;
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            if(document.getElementById('nav-'+tab)) document.getElementById('nav-'+tab).classList.add('active');
+            loadFeed();
+        };
+
+        window.loadFeed = () => {
+            if(feedUnsub) feedUnsub();
+            const con = document.getElementById('feedContainer');
+            con.innerHTML = '<div class="flex items-center justify-center h-40 gap-3 text-gray-500"><div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div> Yükleniyor...</div>';
+
+            const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(60));
+            feedUnsub = onSnapshot(q, (snap) => {
+                let posts = [];
+                snap.forEach(d => {
+                    const dt = d.data();
+                    if(!dt.isReply) posts.push({id: d.id, ...dt});
+                });
+
+                if(activeTab === 'following') {
+                    const f = currentUser.following || [];
+                    posts = posts.filter(p => f.includes(p.uid) || p.uid === currentUser.id);
+                }
+
+                renderPosts(posts, con);
+            });
+        };
+
+        function renderPosts(posts, container) {
+            container.innerHTML = '';
+            if(posts.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-gray-500 opacity-60"><i class="fa-solid fa-ghost text-5xl mb-4"></i><p>Buralar çok sessiz...</p></div>`;
+                return;
+            }
+
+            posts.forEach(p => {
+                const isLiked = p.likes?.includes(currentUser.id);
+                const isReposted = p.reposts?.includes(currentUser.id);
+                const time = p.createdAt ? timeAgo(p.createdAt.toDate()) : 'Şimdi';
+                const avatar = p.avatar || `https://ui-avatars.com/api/?name=${p.username}`;
+                const badge = getBadgeHTML(p.badge);
+
+                let header = '', content = p.text;
+                if(p.isRepost && p.refPost) {
+                    header = `<div class="text-xs text-gray-500 mb-2 flex items-center gap-2"><i class="fa-solid fa-retweet text-green-500"></i> <span class="font-bold text-white">${p.username}</span> repostladı</div>`;
+                    const refBadge = getBadgeHTML(p.refPost.badge);
+                    content = `
+                        <div class="border border-gray-700 rounded-xl p-4 bg-gray-900/40 hover:bg-gray-900/60 transition cursor-pointer mt-1" onclick="openDetailModal('${p.refPost.id}')">
+                            <div class="flex items-center gap-2 mb-2">
+                                <img src="${p.refPost.avatar}" class="w-6 h-6 rounded-full bg-gray-800">
+                                <span class="font-bold text-white text-sm flex items-center">${p.refPost.username} ${refBadge}</span>
+                                <span class="text-gray-500 text-xs">@${p.refPost.uid.substring(0,5)}</span>
+                            </div>
+                            <div class="text-sm text-gray-300 line-clamp-4 leading-relaxed">${p.refPost.text}</div>
+                        </div>
+                    `;
+                }
+
+                const html = `
+                    <article class="p-5 post-card cursor-pointer animate-slide-up" onclick="openDetailModal('${p.id}')">
+                        ${header}
+                        <div class="flex gap-4">
+                            <img src="${avatar}" class="w-12 h-12 rounded-full object-cover bg-gray-800 hover:opacity-80 transition border border-gray-700" onclick="event.stopPropagation(); loadProfile('${p.uid}')">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="group" onclick="event.stopPropagation(); loadProfile('${p.uid}')">
+                                        <h4 class="font-bold text-white text-[16px] group-hover:underline flex items-center gap-1 font-display">${p.username} ${badge}</h4>
+                                        <div class="text-xs text-gray-500">@${p.uid.substring(0,6)} • ${time}</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-gray-200 whitespace-pre-wrap leading-relaxed text-[15px] font-light">${content}</div>
+                                <div class="mt-4 flex items-center gap-8 text-gray-500" onclick="event.stopPropagation()">
+                                    <button onclick="toggleLike('${p.id}')" class="group flex items-center gap-2 hover:text-pink-500 transition like-anim ${isLiked?'text-pink-500':''}">
+                                        <i class="${isLiked?'fa-solid':'fa-regular'} fa-heart text-lg"></i> <span class="text-xs font-bold">${p.likes?.length||0}</span>
+                                    </button>
+                                    <button onclick="repost('${p.id}', '${p.text.replace(/'/g,"\\'")}', '${p.uid}', '${p.username}', '${avatar}', '${p.badge||''}')" class="group flex items-center gap-2 hover:text-green-500 transition ${isReposted?'text-green-500':''}">
+                                        <i class="fa-solid fa-retweet text-lg"></i> <span class="text-xs font-bold">${p.reposts?.length||0}</span>
+                                    </button>
+                                    <button class="group flex items-center gap-2 hover:text-blue-500 transition">
+                                        <i class="fa-regular fa-comment text-lg"></i> <span class="text-xs font-bold">${p.replyCount||0}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        // --- PROFİL (FIXED) ---
+        window.loadProfile = async (uid) => {
+            if(feedUnsub) feedUnsub();
+            const con = document.getElementById('feedContainer');
+            con.innerHTML = '<div class="flex items-center justify-center h-40 gap-2"><div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div> Profil Yükleniyor...</div>';
+
+            const uSnap = await getDoc(doc(db, "users", uid));
+            if(!uSnap.exists()) return;
+            const u = uSnap.data();
+            const isMe = uid === currentUser.id;
+            const isFollowing = currentUser.following?.includes(uid);
+            const badge = getBadgeHTML(u.badge);
+
+            const header = `
+                <div class="animate-slide-up">
+                    <div class="h-40 bg-gradient-to-r from-blue-900 to-black relative">
+                        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+                        <div class="absolute bottom-0 w-full h-20 bg-gradient-to-t from-black/60 to-transparent"></div>
+                    </div>
+                    <div class="px-5 pb-4 relative">
+                        <div class="flex justify-between items-end -mt-12 mb-4">
+                            <img src="${u.avatar || 'https://ui-avatars.com/api/?name='+u.username}" class="w-28 h-28 rounded-full border-[5px] border-[#020617] bg-gray-800 object-cover shadow-2xl">
+                            ${!isMe ? `
+                                <button onclick="toggleFollow('${uid}')" id="followBtn" class="px-6 py-2.5 rounded-full font-bold text-sm transition shadow-lg ${isFollowing 
+                                    ? 'border border-gray-600 text-white bg-black/50 backdrop-blur hover:bg-red-900/30 hover:border-red-500' 
+                                    : 'bg-white text-black hover:bg-gray-200'}">
+                                    ${isFollowing ? 'Takip Ediliyor' : 'Takip Et'}
+                                </button>
+                            ` : `<button onclick="openEditProfile()" class="px-5 py-2 rounded-full border border-gray-600 text-sm font-bold text-white hover:bg-gray-800 backdrop-blur-sm">Profili Düzenle</button>`}
+                        </div>
+                        <div>
+                            <h2 class="text-3xl font-bold text-white flex items-center gap-1 font-display tracking-tight">${u.username} ${badge}</h2>
+                            <p class="text-gray-400 text-sm mt-3 leading-relaxed max-w-lg">${u.bio || 'Henüz bir biyografi eklenmemiş.'}</p>
+                            <div class="flex gap-6 mt-4 text-sm text-gray-500">
+                                <span><b class="text-white">${u.following?.length||0}</b> Takip</span>
+                                <span><b class="text-white">${u.followers?.length||0}</b> Takipçi</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex border-b border-gray-800 mt-2">
+                        <button class="flex-1 py-4 text-sm font-bold text-white border-b-4 border-blue-500 bg-white/5">Gönderiler</button>
+                    </div>
+                    <div id="profileFeed"></div>
+                </div>
+            `;
+            con.innerHTML = header;
+            
+            // Profil gönderilerini getir (KENDİ POSTLARI + REPOSTLAR)
+            const pf = document.getElementById('profileFeed');
+            const qOwn = query(collection(db, "posts"), where("uid", "==", uid), orderBy("createdAt", "desc"));
+            
+            // Realtime listener for profile feed
+            onSnapshot(qOwn, (snap) => {
+                let allPosts = [];
+                snap.forEach(d => { 
+                    if(!d.data().isReply) allPosts.push({id: d.id, ...d.data()}) 
+                });
+                renderPosts(allPosts, pf);
+            });
+        };
+
+        // --- AKSİYONLAR ---
+        window.openCreateModal = () => document.getElementById('createModal').classList.remove('hidden');
+        window.openVerifyModal = () => document.getElementById('verifyModal').classList.remove('hidden');
+        window.openEditProfile = () => {
+            document.getElementById('editName').value = currentUser.username;
+            document.getElementById('editAvatar').value = currentUser.avatar||'';
+            document.getElementById('editBio').value = currentUser.bio||'';
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        };
+
+        window.sendPost = async () => {
+            const t = document.getElementById('modalPostInput').value.trim();
+            if(!t) return;
+            document.getElementById('createModal').classList.add('hidden');
+            
+            // ROZET BİLGİSİNİ KULLANICIDAN ALIP POSTA KAYDET
+            await addDoc(collection(db, "posts"), {
+                text: t, uid: currentUser.id, username: currentUser.username, 
+                avatar: currentUser.avatar || '', 
+                badge: currentUser.badge || '', // ÖNEMLİ: Badge verisini post'a gömüyoruz
+                createdAt: serverTimestamp(), likes:[], reposts:[], replyCount:0, isReply:false, isRepost:false
+            });
+            document.getElementById('modalPostInput').value = '';
+            showToast('Gönderildi!', 'success');
+        };
+
+        window.submitVerify = async () => {
+            const r = document.getElementById('verifyReason').value.trim();
+            if(!r) return;
+            await addDoc(collection(db, "verification_requests"), {
+                uid: currentUser.id, username: currentUser.username, reason: r, status: 'pending', createdAt: serverTimestamp()
+            });
+            document.getElementById('verifyModal').classList.add('hidden');
+            showToast('Başvuru İletildi!', 'success');
+        };
+
+        window.saveProfile = async () => {
+            const n = document.getElementById('editName').value;
+            const a = document.getElementById('editAvatar').value;
+            const b = document.getElementById('editBio').value;
+            await updateDoc(doc(db, "users", currentUser.id), { username: n, avatar: a, bio: b });
+            document.getElementById('editProfileModal').classList.add('hidden');
+            window.location.reload();
+        };
+
+        window.toggleLike = async (pid) => {
+            const ref = doc(db, "posts", pid);
+            const d = (await getDoc(ref)).data();
+            const likes = d.likes || [];
+            if(likes.includes(currentUser.id)) await updateDoc(ref, { likes: arrayRemove(currentUser.id) });
+            else await updateDoc(ref, { likes: arrayUnion(currentUser.id) });
+        };
+
+        window.repost = async (pid, text, uid, name, avatar, badge) => {
+            if(!confirm("Repostlansın mı?")) return;
+            await addDoc(collection(db, "posts"), {
+                uid: currentUser.id, username: currentUser.username, avatar: currentUser.avatar, 
+                badge: currentUser.badge, // Repost edenin rozeti
+                createdAt: serverTimestamp(), isRepost: true, isReply: false, likes:[], reposts:[],
+                refPost: { id: pid, text: text, uid: uid, username: name, avatar: avatar, badge: badge }
+            });
+            await updateDoc(doc(db, "posts", pid), { reposts: arrayUnion(currentUser.id) });
+            showToast("Repostlandı!", "success");
+        };
+
+        window.toggleFollow = async (targetUid) => {
+            const myRef = doc(db, "users", currentUser.id);
+            const targetRef = doc(db, "users", targetUid);
+            const isFollowing = currentUser.following?.includes(targetUid);
+            try {
+                if(isFollowing) {
+                    await updateDoc(myRef, { following: arrayRemove(targetUid) });
+                    await updateDoc(targetRef, { followers: arrayRemove(currentUser.id) });
+                    showToast("Takipten çıkıldı");
+                } else {
+                    await updateDoc(myRef, { following: arrayUnion(targetUid) });
+                    await updateDoc(targetRef, { followers: arrayUnion(currentUser.id) });
+                    showToast("Takip ediliyor", "success");
+                }
+                setTimeout(() => loadProfile(targetUid), 300);
+            } catch(e) { console.error(e); }
+        };
+
+        // --- DETAY & YORUM ---
+        window.openDetailModal = async (pid) => {
+            currentDetailId = pid;
+            const m = document.getElementById('detailModal');
+            const ma = document.getElementById('mainPostArea');
+            const ca = document.getElementById('commentsArea');
+            m.classList.remove('hidden');
+            ma.innerHTML = '<div class="text-center py-5"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+            ca.innerHTML = '';
+
+            const ps = await getDoc(doc(db, "posts", pid));
+            if(!ps.exists()) { ma.innerHTML="Silinmiş."; return; }
+            const p = ps.data();
+            const badge = getBadgeHTML(p.badge);
+
+            ma.innerHTML = `
+                <div class="flex gap-4 mb-5">
+                    <img src="${p.avatar}" class="w-14 h-14 rounded-full bg-gray-800 object-cover border border-gray-700">
+                    <div>
+                        <div class="font-bold text-white text-xl flex items-center gap-1 font-display">${p.username} ${badge}</div>
+                        <div class="text-gray-500 text-sm">@${p.uid.substring(0,6)}</div>
+                    </div>
+                </div>
+                <div class="text-white text-2xl leading-relaxed whitespace-pre-wrap font-light">${p.text}</div>
+                <div class="text-gray-500 text-sm mt-6 py-4 border-y border-gray-800 flex gap-6">
+                    <span><b class="text-white">${p.likes?.length||0}</b> Beğeni</span>
+                    <span><b class="text-white">${p.reposts?.length||0}</b> Repost</span>
+                </div>
+            `;
+
+            const q = query(collection(db, "posts"), where("isReply", "==", true), where("replyToId", "==", pid), orderBy("createdAt", "asc"));
+            onSnapshot(q, snap => {
+                ca.innerHTML = '';
+                snap.forEach(d => {
+                    const c = d.data();
+                    const cb = getBadgeHTML(c.badge);
+                    ca.innerHTML += `
+                        <div class="flex gap-4 p-4 bg-gray-900/40 rounded-2xl border border-gray-800/50">
+                            <img src="${c.avatar}" class="w-10 h-10 rounded-full bg-gray-800 object-cover">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-white text-base flex items-center gap-1">${c.username} ${cb}</span>
+                                    <span class="text-gray-500 text-xs">${timeAgo(c.createdAt.toDate())}</span>
+                                </div>
+                                <div class="text-gray-200 text-base mt-1 font-light leading-relaxed">${c.text}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+        };
+        window.closeDetailModal = () => document.getElementById('detailModal').classList.add('hidden');
+        window.sendComment = async () => {
+            const v = document.getElementById('commentInput').value.trim();
+            if(!v || !currentDetailId) return;
+            await addDoc(collection(db, "posts"), {
+                text: v, uid: currentUser.id, username: currentUser.username, 
+                avatar: currentUser.avatar, badge: currentUser.badge,
+                createdAt: serverTimestamp(), isReply: true, replyToId: currentDetailId
+            });
+            await updateDoc(doc(db, "posts", currentDetailId), { replyCount: (await getDoc(doc(db,"posts",currentDetailId))).data().replyCount + 1 });
+            document.getElementById('commentInput').value = '';
+        };
+
+        window.loadSuggestions = async () => {
+            const l = document.getElementById('suggestionsList');
+            const q = query(collection(db, "users"), limit(4));
+            const s = await getDocs(q);
+            l.innerHTML = '';
+            s.forEach(d => {
+                const u = d.data();
+                if(d.id !== currentUser.id) {
+                    l.innerHTML += `
+                        <div class="flex items-center gap-3 p-3 hover:bg-white/5 rounded-2xl cursor-pointer transition" onclick="loadProfile('${d.id}')">
+                            <img src="${u.avatar || 'https://ui-avatars.com/api/?name='+u.username}" class="w-10 h-10 rounded-full bg-gray-800 object-cover">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-white text-sm truncate">${u.username}</div>
+                                <div class="text-[10px] text-gray-500">@${d.id.substring(0,5)}</div>
+                            </div>
+                            <button class="bg-white text-black text-xs font-bold px-4 py-1.5 rounded-full hover:bg-gray-200">Git</button>
+                        </div>`;
+                }
+            });
+        };
+
+        window.doLogout = () => signOut(auth);
+        
+        function timeAgo(date) {
+            const s = Math.floor((new Date() - date) / 1000);
+            if(s < 60) return 'Az önce';
+            const m = Math.floor(s/60); if(m<60) return m + 'dk';
+            const h = Math.floor(m/60); if(h<24) return h + 'sa';
+            return Math.floor(h/24) + 'gün';
+        }
+
+        function showToast(msg, type='info') {
+            const t = document.getElementById('toast');
+            t.innerHTML = `<i class="fa-solid ${type==='success'?'fa-check-circle':'fa-info-circle'}"></i> ${msg}`;
+            t.classList.remove('hidden', 'translate-y-10', 'opacity-0');
+            t.classList.add(type==='success'?'bg-green-600':'bg-blue-600');
+            setTimeout(() => { t.classList.add('translate-y-10', 'opacity-0'); setTimeout(()=>t.classList.add('hidden'),300); }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BL Finans - Ultimate v3</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        xmax: { 500: '#d946ef', 600: '#c026d3' },
+                        dc: { 500: '#fbbf24', 600: '#d97706' },
+                        bl: { 500: '#3b82f6', 600: '#2563eb' },
+                        dark: '#020617',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    animation: { 'blob': 'blob 10s infinite' },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body { background-color: #020617; color: #e2e8f0; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+        .glass-panel { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .credit-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6); transform-style: preserve-3d; transition: all 0.5s ease; }
+        .credit-card:active { transform: scale(0.98); }
+        .bank-bl { background: linear-gradient(135deg, #172554, #2563eb); }
+        .bank-xmax { background: linear-gradient(135deg, #4a044e, #d946ef); }
+        .bank-dc { background: linear-gradient(135deg, #451a03, #d97706); }
+        .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 0.95rem; line-height: 1.4; }
+        .chat-bubble.me { background: #2563eb; color: white; border-bottom-right-radius: 4px; margin-left: auto; }
+        .chat-bubble.other { background: #1e293b; color: #e2e8f0; border-bottom-left-radius: 4px; margin-right: auto; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        /* Mobile Input Fix */
+        input, textarea { font-size: 16px !important; }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col md:flex-row font-sans selection:bg-blue-500/30 selection:text-white">
+
+    <div id="loadingScreen" class="absolute inset-0 z-[999] bg-[#020617] flex items-center justify-center transition-opacity duration-500">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div class="text-white font-bold tracking-widest animate-pulse">SİSTEM YÜKLENİYOR...</div>
+        </div>
+    </div>
+
+    <aside class="hidden md:flex w-72 glass-panel border-r border-white/5 flex-col justify-between p-6 shrink-0 z-20">
+        <div>
+            <div class="flex items-center gap-4 mb-10 pl-2">
+                <div class="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg"><i class="fa-solid fa-building-columns text-white text-xl"></i></div>
+                <h1 class="font-display font-bold text-xl text-white">BL FINANS</h1>
+            </div>
+            <button onclick="window.location.href='mm (2).html'" class="w-full text-left px-5 py-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 transition flex items-center gap-3">
+                <i class="fa-solid fa-arrow-left"></i> Portala Dön
+            </button>
+        </div>
+        <div class="p-4 rounded-2xl bg-white/5 border border-white/10">
+            <div class="flex items-center gap-3 mb-3">
+                <img id="d_myAvatar" class="w-10 h-10 rounded-full bg-gray-700 object-cover">
+                <div>
+                    <h4 id="d_myName" class="font-bold text-white text-sm truncate">...</h4>
+                    <p class="text-[10px] text-gray-400">Kullanıcı</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="text-xs text-gray-500 font-bold block">CÜZDAN</span>
+                <span id="d_walletBalance" class="text-emerald-400 font-mono font-bold text-lg">0 ₺</span>
+            </div>
+        </div>
+    </aside>
+
+    <header class="md:hidden h-16 glass-panel border-b border-white/5 flex items-center justify-between px-5 shrink-0 z-30">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center"><i class="fa-solid fa-building-columns text-white"></i></div>
+            <h1 class="font-display font-bold text-lg text-white">BL FINANS</h1>
+        </div>
+        <div class="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
+            <i class="fa-solid fa-wallet text-gray-400 text-xs"></i>
+            <span id="m_walletBalance" class="text-sm font-mono font-bold text-emerald-400">0 ₺</span>
+        </div>
+    </header>
+
+    <main class="flex-1 relative flex flex-col overflow-hidden z-10 bg-[#020617]">
+        
+        <div id="viewSelection" class="hidden flex-1 overflow-y-auto p-5 pb-32 md:p-10 scroll-smooth">
+            <div class="max-w-5xl mx-auto space-y-6">
+                <div class="bg-blue-900/20 border border-blue-500/30 p-6 rounded-2xl text-center md:text-left">
+                    <h2 class="text-2xl font-bold text-white mb-2">Hoşgeldiniz!</h2>
+                    <p class="text-gray-400">Finansal işlemlerinizi yönetmek için hemen bir banka seçin ve başvurun.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="glass-panel p-6 rounded-3xl relative group overflow-hidden flex flex-col items-center text-center hover:bg-white/5 transition">
+                        <div class="w-20 h-20 rounded-full bg-blue-600/20 flex items-center justify-center mb-4 text-blue-500 text-4xl"><i class="fa-solid fa-building-columns"></i></div>
+                        <h3 class="text-2xl font-bold text-white mb-1">BL Bank</h3>
+                        <p class="text-sm text-blue-400 mb-4 font-mono">RESMİ DEVLET BANKASI</p>
+                        <button onclick="applyForBank('BL Bank')" class="w-full py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition text-lg">BAŞVUR</button>
+                    </div>
+                    <div class="glass-panel p-6 rounded-3xl relative group overflow-hidden flex flex-col items-center text-center hover:bg-white/5 transition border-t-2 border-fuchsia-500/50">
+                        <div class="w-20 h-20 rounded-full bg-fuchsia-600/20 flex items-center justify-center mb-4 text-fuchsia-500 text-4xl"><i class="fa-solid fa-bolt"></i></div>
+                        <h3 class="text-2xl font-bold text-white mb-1">Xmax Bank</h3>
+                        <p class="text-sm text-fuchsia-400 mb-4 font-mono">DİJİTAL & KRİPTO</p>
+                        <button onclick="applyForBank('Xmax Bank')" class="w-full py-4 bg-fuchsia-600 text-white font-bold rounded-xl shadow-lg active:scale-95 transition text-lg">BAŞVUR</button>
+                    </div>
+                    <div class="glass-panel p-6 rounded-3xl relative group overflow-hidden flex flex-col items-center text-center hover:bg-white/5 transition border-t-2 border-yellow-500/50">
+                        <div class="w-20 h-20 rounded-full bg-yellow-600/20 flex items-center justify-center mb-4 text-yellow-500 text-4xl"><i class="fa-solid fa-crown"></i></div>
+                        <h3 class="text-2xl font-bold text-white mb-1">BACKWEEDED</h3>
+                        <p class="text-sm text-yellow-500 mb-4 font-mono">ELİT & ÖZEL</p>
+                        <button onclick="applyForBank('BACKWEEDED DC')" class="w-full py-4 bg-yellow-600 text-black font-bold rounded-xl shadow-lg active:scale-95 transition text-lg">BAŞVUR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="viewApplication" class="hidden flex-1 flex flex-col h-full relative bg-[#020617]">
+            <div class="h-16 glass-panel border-b border-white/5 flex items-center justify-between px-5 shrink-0 z-20">
+                <div class="flex items-center gap-3">
+                    <div id="appBankIcon" class="w-10 h-10 rounded-xl flex items-center justify-center text-xl"></div>
+                    <div>
+                        <h2 id="appBankName" class="font-bold text-white">Başvuru</h2>
+                        <div class="flex items-center gap-1.5"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span><p class="text-xs text-green-400 font-mono">CANLI DESTEK</p></div>
+                    </div>
+                </div>
+            </div>
+            <div id="chatFeed" class="flex-1 overflow-y-auto p-4 space-y-3 pb-32 scroll-smooth"></div>
+            <div class="absolute bottom-0 md:relative w-full glass-panel border-t border-white/5 p-4 pb-24 md:pb-4 z-40 bg-[#020617]">
+                <form id="chatForm" class="flex gap-3 max-w-4xl mx-auto">
+                    <input id="chatInput" type="text" placeholder="Mesaj yaz..." class="flex-1 bg-gray-800 border border-gray-700 rounded-2xl px-5 py-4 text-white outline-none focus:border-blue-500 transition text-lg">
+                    <button type="submit" class="bg-blue-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition"><i class="fa-solid fa-paper-plane text-xl"></i></button>
+                </form>
+            </div>
+        </div>
+
+        <div id="viewDashboard" class="hidden flex-1 overflow-y-auto p-4 pb-32 md:p-10 scroll-smooth">
+            <div class="max-w-6xl mx-auto animate-fade-in">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white truncate max-w-[200px]" id="dashUsername">KULLANICI</h2>
+                        <div class="flex items-center gap-2 mt-1">
+                            <p class="text-gray-400 text-sm font-mono tracking-wider bg-white/5 px-2 py-1 rounded inline-block" id="dashIBAN">TR99...</p>
+                            <button onclick="copyIBAN()" class="text-blue-400 text-xs hover:text-white"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <button onclick="openSupport()" class="bg-white/10 border border-white/20 px-5 py-3 rounded-xl text-sm font-bold text-white flex items-center gap-2 active:bg-white/20"><i class="fa-solid fa-headset text-blue-400 text-lg"></i> Destek</button>
+                </div>
+
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <div class="w-full lg:w-[420px] space-y-6">
+                        <div id="myCreditCard" class="credit-card w-full aspect-[1.586] rounded-3xl p-8 flex flex-col justify-between relative shadow-2xl">
+                            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/circuit.png')] opacity-20 mix-blend-overlay"></div>
+                            <div class="flex justify-between items-start relative z-10">
+                                <h3 id="cardBankName" class="font-display font-black text-white text-2xl italic tracking-widest opacity-90">BANK</h3>
+                                <i class="fa-solid fa-wifi text-white/60 text-3xl rotate-90"></i>
+                            </div>
+                            <div class="relative z-10 mt-auto">
+                                <p class="font-mono text-white text-xl md:text-2xl tracking-widest mb-4 drop-shadow-md">**** **** **** <span id="cardLast4">0000</span></p>
+                                <div class="flex justify-between items-end">
+                                    <p class="text-white font-bold font-mono uppercase text-lg" id="cardOwner">ISIM</p>
+                                    <p class="text-white font-bold font-mono">12/30</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="glass-panel p-5 rounded-2xl border-l-4 border-emerald-500 bg-gray-900/50">
+                                <p class="text-xs text-gray-400 uppercase font-bold mb-1">Hesap Bakiyesi</p>
+                                <h2 id="bankBalanceDisplay" class="text-2xl font-mono font-bold text-white">0 ₺</h2>
+                            </div>
+                            <div class="glass-panel p-5 rounded-2xl border-l-4 border-red-500 bg-gray-900/50">
+                                <p class="text-xs text-gray-400 uppercase font-bold mb-1">Kredi Borcu</p>
+                                <h2 id="debtDisplay" class="text-2xl font-mono font-bold text-red-400">0 ₺</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 space-y-6">
+                        <div class="glass-panel p-6 rounded-3xl">
+                            <h3 class="font-bold text-white text-lg mb-4"><i class="fa-solid fa-money-bill-transfer text-blue-500 mr-2"></i> ATM İŞLEMLERİ</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="bg-green-900/20 border border-green-500/30 p-4 rounded-2xl">
+                                    <input type="number" id="depositAmount" placeholder="Yatırılacak Tutar" class="w-full bg-black/40 border border-green-500/30 rounded-xl px-4 py-3 text-white font-mono mb-3">
+                                    <button onclick="atmTransaction('deposit')" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">YATIR</button>
+                                </div>
+                                <div class="bg-red-900/20 border border-red-500/30 p-4 rounded-2xl">
+                                    <input type="number" id="withdrawAmount" placeholder="Çekilecek Tutar" class="w-full bg-black/40 border border-red-500/30 rounded-xl px-4 py-3 text-white font-mono mb-3">
+                                    <button onclick="atmTransaction('withdraw')" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">ÇEK</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-3xl">
+                            <h3 class="font-bold text-white text-lg mb-4"><i class="fa-solid fa-paper-plane text-purple-500 mr-2"></i> PARA TRANSFERİ</h3>
+                            <div class="space-y-3">
+                                <input type="text" id="transferIBAN" placeholder="TR İBAN veya İsim" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white">
+                                <input type="number" id="transferAmount" placeholder="Gönderilecek Tutar" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-mono">
+                                <button onclick="transferMoney()" class="w-full bg-purple-600 text-white font-bold py-3 rounded-xl shadow-lg active:scale-95">GÖNDER</button>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-3xl">
+                            <h3 class="font-bold text-white text-lg mb-2">Kredi & Borç</h3>
+                            <div class="bg-yellow-900/10 border border-yellow-500/20 p-4 rounded-xl mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-yellow-500 font-bold">Limit</span>
+                                    <span id="loanVal" class="text-white font-mono font-bold text-xl">25.000 ₺</span>
+                                </div>
+                                <input type="range" min="5000" max="100000" step="5000" class="w-full h-4 bg-gray-700 rounded-full appearance-none accent-yellow-500" oninput="document.getElementById('loanVal').innerText=parseInt(this.value).toLocaleString()+' ₺'">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button onclick="requestCredit()" class="py-3 bg-yellow-600 text-black font-bold rounded-xl hover:bg-yellow-500">Kredi Çek</button>
+                                <button onclick="payDebt()" class="py-3 bg-gray-700 text-white font-bold rounded-xl hover:bg-gray-600">Borç Öde</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="viewBanker" class="hidden flex-1 flex flex-col md:flex-row h-full overflow-hidden">
+            <div id="bankerListPanel" class="w-full md:w-80 glass-panel border-r border-white/5 flex flex-col z-20 h-full">
+                <div class="p-4 border-b border-white/5 bg-blue-900/10">
+                    <h2 class="font-bold text-white text-sm tracking-wide mb-3">BANKACI PANELİ</h2>
+                    <div class="flex gap-2">
+                        <button onclick="switchBankerTab('apps')" id="btn-tab-apps" class="flex-1 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white">Başvurular</button>
+                        <button onclick="switchBankerTab('credits')" id="btn-tab-credits" class="flex-1 py-2 rounded-lg text-xs font-bold bg-gray-800 text-gray-400">Krediler</button>
+                    </div>
+                </div>
+                <div id="requestList" class="flex-1 overflow-y-auto p-2 space-y-2 pb-24 md:pb-0"></div>
+            </div>
+            
+            <div id="bankerWorkArea" class="hidden md:flex flex-1 flex-col bg-[#020617] fixed inset-0 z-50 md:relative md:z-auto">
+                <div class="md:hidden h-16 glass-panel border-b border-white/5 flex items-center gap-4 px-4 bg-[#0f172a]">
+                    <button onclick="closeBankerChatMobile()" class="text-white bg-white/10 p-2 rounded-full"><i class="fa-solid fa-arrow-left"></i></button>
+                    <span class="font-bold text-white text-lg">Müşteri Detayı</span>
+                </div>
+                
+                <div id="noRequestSelected" class="hidden md:flex absolute inset-0 items-center justify-center flex-col text-gray-500 gap-4 opacity-50">
+                    <i class="fa-solid fa-inbox text-6xl"></i><p>Listeden seçim yapın.</p>
+                </div>
+                
+                <div id="bankerActiveArea" class="hidden flex-col h-full">
+                    <header class="glass-panel border-b border-white/5 p-4 bg-[#0f172a]">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 id="bankerCustomerName" class="font-bold text-white text-lg">Müşteri</h3>
+                                <span id="bankerTargetBank" class="text-xs font-bold text-blue-400">...</span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="blockAccount()" class="bg-red-900/40 text-red-400 border border-red-500/30 p-2 rounded hover:bg-red-900 text-xs font-bold" title="Bloke Et"><i class="fa-solid fa-ban"></i> BLOKE</button>
+                                <button onclick="seizeMoney()" class="bg-orange-900/40 text-orange-400 border border-orange-500/30 p-2 rounded hover:bg-orange-900 text-xs font-bold" title="El Koy"><i class="fa-solid fa-hand-holding-dollar"></i> EL KOY</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2" id="bankerActions"></div>
+                    </header>
+
+                    <div id="bankerChatFeed" class="flex-1 overflow-y-auto p-6 space-y-4 pb-24 md:pb-4"></div>
+                    
+                    <div class="absolute bottom-0 w-full glass-panel border-t border-white/5 p-4 pb-safe z-40 bg-[#020617]">
+                        <form id="bankerChatForm" class="flex gap-3 max-w-4xl mx-auto">
+                            <input id="bankerInput" type="text" placeholder="Yanıtla..." class="flex-1 bg-gray-800 border border-gray-700 rounded-2xl px-5 py-3 text-white outline-none">
+                            <button type="submit" class="bg-blue-600 w-14 h-14 rounded-2xl text-white font-bold flex items-center justify-center shadow-lg"><i class="fa-solid fa-paper-plane text-xl"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <nav id="mobileNav" class="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-[#0f172a] border-t border-white/10 flex justify-around items-center z-50 pb-2 shadow-2xl">
+        <button onclick="window.location.reload()" class="flex flex-col items-center gap-1 text-blue-500 w-20"><i class="fa-solid fa-house text-2xl"></i><span class="text-[10px] font-bold">Ana Sayfa</span></button>
+        <button onclick="openSupport()" class="flex flex-col items-center gap-1 text-gray-400 hover:text-white w-20"><i class="fa-solid fa-headset text-2xl"></i><span class="text-[10px] font-bold">Destek</span></button>
+        <button onclick="window.location.href='mm (2).html'" class="flex flex-col items-center gap-1 text-gray-400 hover:text-white w-20"><i class="fa-solid fa-right-from-bracket text-2xl"></i><span class="text-[10px] font-bold">Çıkış</span></button>
+    </nav>
+
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] hidden bg-gray-900 border border-white/20 text-white px-8 py-4 rounded-2xl shadow-2xl font-bold transition-all transform -translate-y-20 opacity-0 flex items-center gap-4 whitespace-nowrap text-lg"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, addDoc, updateDoc, orderBy, serverTimestamp, runTransaction, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBlirRiiNPpdqmTAmq6DsSq8mCUlgBHgVc",
+            authDomain: "lilemir-new.firebaseapp.com",
+            databaseURL: "https://lilemir-new-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lilemir-new",
+            storageBucket: "lilemir-new.firebasestorage.app",
+            messagingSenderId: "339863121380",
+            appId: "1:339863121380:web:123195552e821b085e6bf1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let currentApplicationId = null;
+        let activeBankerAppId = null;
+        let activeBankerTab = 'apps'; 
+        let activeTargetUid = null; // Bankacı işlemleri için
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if (snap.exists()) {
+                    currentUser = { id: user.uid, ...snap.data() };
+                    setupUI();
+                } else window.location.href = 'mm (2).html';
+            } else window.location.href = 'mm (2).html';
+        });
+
+        function setupUI() {
+            setTimeout(() => {
+                document.getElementById('loadingScreen').classList.add('opacity-0');
+                setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 500);
+            }, 800);
+
+            ['d_', 'm_'].forEach(p => {
+                const img = document.getElementById(p+'myAvatar'); if(img) img.src = currentUser.avatar || `https://ui-avatars.com/api/?name=${currentUser.username}`;
+                const bal = document.getElementById(p+'walletBalance'); if(bal) bal.innerText = (currentUser.balance || 0).toLocaleString() + ' ₺';
+                const name = document.getElementById(p+'myName'); if(name) name.innerText = currentUser.username;
+            });
+
+            if (currentUser.role === 'Bankacı') {
+                showView('viewBanker');
+                initBankerPanel();
+                document.getElementById('mobileNav').classList.add('hidden');
+            } else {
+                if (currentUser.bankAccount && currentUser.bankAccount.status === 'active') {
+                    showView('viewDashboard');
+                    initDashboard();
+                } else {
+                    checkExistingApplication(); 
+                }
+            }
+        }
+
+        async function checkExistingApplication() {
+            showView('viewSelection'); 
+            const q = query(collection(db, "bank_applications"), where("uid", "==", currentUser.id), orderBy("createdAt", "desc"), limit(1));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const appData = snap.docs[0].data();
+                if(appData.status === 'pending' || appData.status === 'support') {
+                    currentApplicationId = snap.docs[0].id;
+                    showView('viewApplication');
+                    initUserChat(appData.bankName);
+                }
+            }
+        }
+
+        window.applyForBank = async (bankName) => {
+            if(!confirm(`${bankName} için başvuru yapılsın mı?`)) return;
+            try {
+                const docRef = await addDoc(collection(db, "bank_applications"), {
+                    uid: currentUser.id, username: currentUser.username, avatar: currentUser.avatar || '',
+                    bankName: bankName, status: 'pending', type: 'account', createdAt: serverTimestamp()
+                });
+                await addDoc(collection(db, "bank_applications", docRef.id, "messages"), {
+                    text: `Merhaba, ${bankName} hesabı açmak istiyorum.`, sender: currentUser.username, uid: currentUser.id, role: 'User', createdAt: serverTimestamp()
+                });
+                currentApplicationId = docRef.id;
+                showView('viewApplication');
+                initUserChat(bankName);
+                showToast("Başvuru Oluşturuldu", "success");
+            } catch(e) { showToast("Hata: " + e.message, "error"); }
+        };
+
+        function initUserChat(bankName) {
+            document.getElementById('appBankName').innerText = bankName;
+            const iconBox = document.getElementById('appBankIcon');
+            iconBox.className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-500";
+            iconBox.innerHTML = '<i class="fa-solid fa-bank"></i>';
+
+            const q = query(collection(db, "bank_applications", currentApplicationId, "messages"), orderBy("createdAt", "asc"));
+            onSnapshot(q, (snap) => {
+                const feed = document.getElementById('chatFeed');
+                feed.innerHTML = '';
+                snap.forEach(d => renderMessage(feed, d.data(), currentUser.id));
+                feed.scrollTop = feed.scrollHeight;
+            });
+            onSnapshot(doc(db, "bank_applications", currentApplicationId), async (snap) => {
+                if(snap.exists() && snap.data().status === 'approved') {
+                    showToast("🎉 HESAP ONAYLANDI!", "success");
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+            });
+        }
+
+        document.getElementById('chatForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const txt = document.getElementById('chatInput').value.trim();
+            if(!txt) return;
+            await addDoc(collection(db, "bank_applications", currentApplicationId, "messages"), { text: txt, sender: currentUser.username, uid: currentUser.id, role: 'User', createdAt: serverTimestamp() });
+            document.getElementById('chatInput').value = '';
+        };
+
+        function initDashboard() {
+            const acc = currentUser.bankAccount;
+            document.getElementById('dashUsername').innerText = currentUser.username;
+            document.getElementById('dashIBAN').innerText = acc.iban || "TR00...";
+            document.getElementById('cardOwner').innerText = currentUser.username;
+            document.getElementById('cardLast4').innerText = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('cardBankName').innerText = acc.bankName;
+            document.getElementById('bankBalanceDisplay').innerText = (acc.balance || 0).toLocaleString() + ' ₺';
+            document.getElementById('debtDisplay').innerText = (acc.creditDebt || 0).toLocaleString() + ' ₺';
+
+            const cardEl = document.getElementById('myCreditCard');
+            cardEl.className = "credit-card w-full aspect-[1.586] rounded-3xl p-8 flex flex-col justify-between relative shadow-2xl";
+            if(acc.bankName.includes('BL')) cardEl.classList.add('bank-bl');
+            else if(acc.bankName.includes('Xmax')) cardEl.classList.add('bank-xmax');
+            else cardEl.classList.add('bank-dc');
+        }
+
+        window.atmTransaction = async (type) => {
+            const amountId = type === 'deposit' ? 'depositAmount' : 'withdrawAmount';
+            const val = parseInt(document.getElementById(amountId).value);
+            if(!val || val <= 0) return showToast("Geçersiz miktar", "error");
+            try {
+                await runTransaction(db, async(t) => {
+                    const uRef = doc(db, "users", currentUser.id);
+                    const uDoc = await t.get(uRef);
+                    const uData = uDoc.data();
+                    const wallet = uData.balance || 0;
+                    const bank = uData.bankAccount.balance || 0;
+                    if(uData.bankAccount.status === 'blocked') throw "HESAP BLOKELİ!";
+
+                    if(type === 'deposit') {
+                        if(wallet < val) throw "Cüzdan Bakiyesi Yetersiz!";
+                        t.update(uRef, { balance: wallet - val, "bankAccount.balance": bank + val });
+                    } else {
+                        if(bank < val) throw "Banka Bakiyesi Yetersiz!";
+                        t.update(uRef, { balance: wallet + val, "bankAccount.balance": bank - val });
+                    }
+                });
+                const newSnap = await getDoc(doc(db, "users", currentUser.id));
+                currentUser = { id: newSnap.id, ...newSnap.data() };
+                setupUI(); 
+                document.getElementById(amountId).value = '';
+                showToast("İşlem Başarılı ✅", "success");
+            } catch(e) { showToast(e.message || e, "error"); }
+        };
+
+        // --- YENİ: IBAN TRANSFER ---
+        window.transferMoney = async () => {
+            const target = document.getElementById('transferIBAN').value.trim();
+            const amount = parseInt(document.getElementById('transferAmount').value);
+            if(!target || !amount || amount <= 0) return showToast("Bilgileri kontrol edin", "error");
+            if(currentUser.bankAccount.balance < amount) return showToast("Yetersiz Bakiye", "error");
+
+            try {
+                // IBAN'a göre kullanıcı ara
+                const q = query(collection(db, "users"), where("bankAccount.iban", "==", target));
+                const snap = await getDocs(q);
+                if(snap.empty) throw "IBAN Bulunamadı!";
+                
+                const receiver = snap.docs[0];
+                if(receiver.id === currentUser.id) throw "Kendine gönderemezsin";
+
+                await runTransaction(db, async(t) => {
+                    const senderRef = doc(db, "users", currentUser.id);
+                    const recvRef = doc(db, "users", receiver.id);
+                    
+                    const sDoc = await t.get(senderRef);
+                    const rDoc = await t.get(recvRef);
+
+                    const sBal = sDoc.data().bankAccount.balance;
+                    const rBal = rDoc.data().bankAccount.balance;
+
+                    if(sBal < amount) throw "Bakiye yetersiz";
+                    
+                    t.update(senderRef, { "bankAccount.balance": sBal - amount });
+                    t.update(recvRef, { "bankAccount.balance": rBal + amount });
+                });
+
+                showToast("Transfer Başarılı 💸", "success");
+                const newSnap = await getDoc(doc(db, "users", currentUser.id));
+                currentUser = { id: newSnap.id, ...newSnap.data() };
+                setupUI();
+                document.getElementById('transferAmount').value = '';
+                document.getElementById('transferIBAN').value = '';
+
+            } catch(e) { showToast(e.message || e, "error"); }
+        };
+
+        window.requestCredit = async () => {
+            const val = parseInt(document.getElementById('loanVal').innerText.replace(/\D/g,''));
+            if(!confirm(`${val.toLocaleString()} ₺ kredi başvurusu yapılsın mı?`)) return;
+            try {
+                const docRef = await addDoc(collection(db, "bank_applications"), {
+                    uid: currentUser.id, username: currentUser.username, avatar: currentUser.avatar || '',
+                    bankName: currentUser.bankAccount.bankName, status: 'pending', type: 'credit', amount: val, createdAt: serverTimestamp()
+                });
+                await addDoc(collection(db, "bank_applications", docRef.id, "messages"), {
+                    text: `Merhaba, ${val.toLocaleString()} ₺ kredi çekmek istiyorum.`, sender: currentUser.username, uid: currentUser.id, role: 'User', createdAt: serverTimestamp()
+                });
+                showToast("Kredi talebi iletildi.", "success");
+            } catch(e) { showToast("Hata: " + e.message, "error"); }
+        };
+
+        window.payDebt = async () => {
+            const debt = currentUser.bankAccount.creditDebt || 0;
+            const bal = currentUser.bankAccount.balance || 0;
+            if(debt <= 0) return showToast("Borcunuz yok.", "success");
+            const payAmount = Math.min(debt, bal);
+            if(payAmount <= 0) return showToast("Bakiyeniz yetersiz.", "error");
+            if(!confirm(`${payAmount.toLocaleString()} ₺ borç ödenecek.`)) return;
+            try {
+                await updateDoc(doc(db, "users", currentUser.id), {
+                    "bankAccount.balance": bal - payAmount,
+                    "bankAccount.creditDebt": debt - payAmount
+                });
+                window.location.reload();
+            } catch(e) { showToast("Hata oluştu", "error"); }
+        };
+
+        // --- BANKACI PANELİ (YENİ ÖZELLİKLER) ---
+        window.switchBankerTab = (tab) => {
+            activeBankerTab = tab;
+            document.getElementById('btn-tab-apps').className = tab==='apps' ? "flex-1 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white" : "flex-1 py-2 rounded-lg text-xs font-bold bg-gray-800 text-gray-400";
+            document.getElementById('btn-tab-credits').className = tab==='credits' ? "flex-1 py-2 rounded-lg text-xs font-bold bg-blue-600 text-white" : "flex-1 py-2 rounded-lg text-xs font-bold bg-gray-800 text-gray-400";
+            initBankerPanel();
+        };
+
+        function initBankerPanel() {
+            const q = query(collection(db, "bank_applications"), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('requestList');
+                list.innerHTML = '';
+                snap.forEach(d => {
+                    const r = d.data();
+                    if(r.status !== 'pending' && r.status !== 'support') return; 
+                    if(activeBankerTab === 'credits' && r.type !== 'credit') return;
+                    if(activeBankerTab === 'apps' && r.type === 'credit') return;
+                    
+                    const div = document.createElement('div');
+                    div.className = `p-4 rounded-xl cursor-pointer border transition mb-2 group active:scale-95 ${activeBankerAppId === d.id ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/5 hover:bg-white/10'}`;
+                    div.onclick = () => loadBankerChat(d.id, r);
+                    
+                    let badgeColor = r.type==='credit' ? 'text-purple-400 bg-purple-400/10' : (r.status==='pending'?'text-yellow-400 bg-yellow-400/10':'text-green-400 bg-green-400/10');
+                    let typeText = r.type==='credit' ? `KREDİ: ${r.amount.toLocaleString()}₺` : (r.status==='pending'?'HESAP AÇILIŞ':'DESTEK');
+
+                    div.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-white">${r.username.charAt(0)}</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-white text-sm truncate">${r.username}</div>
+                                <div class="text-[10px] text-gray-400">${r.bankName}</div>
+                            </div>
+                            <span class="text-[9px] ${badgeColor} px-2 py-0.5 rounded font-bold">${typeText}</span>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function loadBankerChat(appId, data) {
+            activeBankerAppId = appId;
+            activeTargetUid = data.uid; // Hedef kullanıcıyı kaydet
+            document.getElementById('noRequestSelected').classList.add('hidden');
+            
+            // Mobil Overlay Aç
+            const workArea = document.getElementById('bankerWorkArea');
+            workArea.classList.remove('hidden'); 
+            
+            document.getElementById('bankerActiveArea').classList.remove('hidden');
+            document.getElementById('bankerActiveArea').classList.add('flex');
+            document.getElementById('bankerCustomerName').innerText = data.username;
+            document.getElementById('bankerTargetBank').innerText = data.bankName;
+
+            const actions = document.getElementById('bankerActions');
+            if(data.type === 'credit') {
+                actions.innerHTML = `
+                    <button onclick="approveCredit(${data.amount})" class="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow hover:bg-purple-500 transition">ONAYLA</button>
+                    <button onclick="rejectCard()" class="bg-red-600/20 text-red-500 border border-red-600/50 px-4 py-2 rounded-lg text-xs font-bold">RED</button>
+                `;
+            } else if (data.type === 'account') {
+                actions.innerHTML = `
+                    <button onclick="approveCard()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow hover:bg-green-500 transition">AÇ</button>
+                    <button onclick="rejectCard()" class="bg-red-600/20 text-red-500 border border-red-600/50 px-4 py-2 rounded-lg text-xs font-bold">RED</button>
+                `;
+            } else {
+                actions.innerHTML = `<button onclick="rejectCard()" class="bg-gray-600 text-white px-4 py-2 rounded-lg text-xs font-bold">KAPAT</button>`;
+            }
+
+            const q = query(collection(db, "bank_applications", appId, "messages"), orderBy("createdAt", "asc"));
+            onSnapshot(q, (snap) => {
+                const feed = document.getElementById('bankerChatFeed');
+                feed.innerHTML = '';
+                snap.forEach(d => renderMessage(feed, d.data(), currentUser.id));
+                feed.scrollTop = feed.scrollHeight;
+            });
+        }
+
+        window.closeBankerChatMobile = () => { document.getElementById('bankerWorkArea').classList.add('hidden'); activeBankerAppId = null; }
+
+        document.getElementById('bankerChatForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const txt = document.getElementById('bankerInput').value.trim();
+            if(!txt || !activeBankerAppId) return;
+            await addDoc(collection(db, "bank_applications", activeBankerAppId, "messages"), { text: txt, sender: currentUser.username, uid: currentUser.id, role: 'Banker', createdAt: serverTimestamp() });
+            document.getElementById('bankerInput').value = '';
+        };
+
+        // --- YENİ: BANKACI SÜPER YETKİLERİ ---
+        window.blockAccount = async () => {
+            if(!activeTargetUid || !confirm("Bu hesabı bloke etmek istediğine emin misin?")) return;
+            await updateDoc(doc(db, "users", activeTargetUid), { "bankAccount.status": "blocked" });
+            showToast("Hesap Bloke Edildi ⛔", "error");
+        };
+
+        window.seizeMoney = async () => {
+            if(!activeTargetUid) return;
+            const amount = prompt("El konulacak miktar:");
+            if(!amount) return;
+            const uRef = doc(db, "users", activeTargetUid);
+            const uSnap = await getDoc(uRef);
+            const currentBal = uSnap.data().bankAccount.balance || 0;
+            await updateDoc(uRef, { "bankAccount.balance": currentBal - parseInt(amount) });
+            showToast(`${amount} TL El Konuldu 👮`, "success");
+        };
+
+        // Eski Fonksiyonlar (Aynı)
+        window.approveCard = async () => {
+            const appDoc = await getDoc(doc(db, "bank_applications", activeBankerAppId));
+            const targetUid = appDoc.data().uid;
+            const bankName = document.getElementById('bankerTargetBank').innerText;
+            const randomIBAN = "TR" + Math.floor(10 + Math.random() * 89) + " " + Math.floor(1000 + Math.random() * 9000) + " " + Math.floor(1000 + Math.random() * 9000) + " " + Math.floor(1000 + Math.random() * 9000);
+            
+            await updateDoc(doc(db, "users", targetUid), { 
+                bankAccount: { bankName: bankName, balance: 15000, status: 'active', iban: randomIBAN, creditDebt: 0, creditLimit: 50000, openedAt: serverTimestamp() } 
+            });
+            await updateDoc(doc(db, "bank_applications", activeBankerAppId), { status: 'approved' });
+            await addDoc(collection(db, "bank_applications", activeBankerAppId, "messages"), { text: "✅ Hesap açılışı onaylandı. Hoşgeldiniz.", sender: "SİSTEM", role: "System", createdAt: serverTimestamp() });
+            showToast("Hesap Açıldı", "success");
+            closeBankerChatMobile();
+        };
+
+        window.approveCredit = async (amount) => {
+            const appDoc = await getDoc(doc(db, "bank_applications", activeBankerAppId));
+            const targetUid = appDoc.data().uid;
+            const debtAmount = Math.floor(amount * 1.3);
+            
+            await runTransaction(db, async(t) => {
+                const uRef = doc(db, "users", targetUid);
+                const uDoc = await t.get(uRef);
+                const acc = uDoc.data().bankAccount;
+                t.update(uRef, { "bankAccount.balance": (acc.balance || 0) + amount, "bankAccount.creditDebt": (acc.creditDebt || 0) + debtAmount });
+            });
+            await updateDoc(doc(db, "bank_applications", activeBankerAppId), { status: 'approved' });
+            await addDoc(collection(db, "bank_applications", activeBankerAppId, "messages"), { text: `✅ Kredi onaylandı. Hesabınıza ${amount}₺ yattı.`, sender: "SİSTEM", role: "System", createdAt: serverTimestamp() });
+            showToast("Kredi Verildi", "success");
+            closeBankerChatMobile();
+        };
+
+        window.rejectCard = async () => {
+             await updateDoc(doc(db, "bank_applications", activeBankerAppId), { status: 'rejected' });
+             showToast("Reddedildi", "info");
+             closeBankerChatMobile();
+        };
+
+        function renderMessage(container, m, myUid) {
+            const isMe = m.uid === myUid;
+            if(m.role === 'System') {
+                container.innerHTML += `<div class="flex justify-center mb-4"><span class="text-[10px] text-gray-400 bg-white/5 border border-white/5 px-3 py-1 rounded-full uppercase tracking-wider">${m.text}</span></div>`;
+                return;
+            }
+            container.innerHTML += `<div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-slide-up"><div class="chat-bubble ${isMe ? 'me' : 'other'}">${m.text}</div><span class="text-[9px] text-gray-600 mt-1 px-1">${m.sender}</span></div>`;
+        }
+
+        function showView(viewId) {
+            ['viewSelection', 'viewApplication', 'viewDashboard', 'viewBanker'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            const el = document.getElementById(viewId);
+            el.classList.remove('hidden');
+            if(viewId === 'viewBanker' || viewId === 'viewApplication') el.classList.add('flex');
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.className = `fixed top-6 right-6 z-[100] bg-[#0f172a] border ${type==='error'?'border-red-500/50 text-red-400':'border-green-500/50 text-green-400'} px-6 py-4 rounded-2xl shadow-2xl font-bold transition-all transform duration-300 flex items-center gap-3`;
+            t.innerHTML = `<i class="fa-solid ${type==='error'?'fa-circle-exclamation':'fa-circle-check'} text-xl"></i> ${msg}`;
+            t.classList.remove('hidden', '-translate-y-20', 'opacity-0');
+            setTimeout(() => { t.classList.add('-translate-y-20', 'opacity-0'); setTimeout(()=>t.classList.add('hidden'), 300); }, 2500);
+        }
+
+        window.copyIBAN = () => {
+            const iban = document.getElementById('dashIBAN').innerText;
+            navigator.clipboard.writeText(iban);
+            showToast("IBAN Kopyalandı", "success");
+        }
+    </script>
+</body>
+</html>

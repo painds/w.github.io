@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>EGM - Polis Sistemi</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        police: { 900: '#1e3a8a', 800: '#172554', red: '#dc2626' },
+                        dark: '#020617',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    animation: { 'siren': 'siren 1s infinite' },
+                    keyframes: {
+                        siren: {
+                            '0%, 100%': { boxShadow: '0 0 20px 5px rgba(30, 58, 138, 0.5)' },
+                            '50%': { boxShadow: '0 0 20px 5px rgba(220, 38, 38, 0.5)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; -webkit-tap-highlight-color: transparent; }
+        .glass-panel { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .input-style { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 0.5rem; width: 100%; padding: 0.75rem; outline: none; transition: all 0.3s; }
+        .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+        .btn-action { transition: transform 0.1s; }
+        .btn-action:active { transform: scale(0.95); }
+        
+        /* Mobil Kaydırma Düzenlemesi */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col font-sans overflow-hidden bg-[#0f172a]">
+
+    <header class="h-16 bg-[#0f172a] border-b border-blue-900/30 flex items-center justify-between px-4 z-40 shadow-lg relative shrink-0">
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-900/20 via-transparent to-red-900/20 opacity-50 pointer-events-none"></div>
+        <div class="flex items-center gap-3 z-10">
+            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center border-2 border-blue-800 shadow-[0_0_15px_rgba(37,99,235,0.5)]">
+                <i class="fa-solid fa-shield-halved text-blue-900 text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-white text-lg tracking-wider">EGM POLİS</h1>
+                <p class="text-[10px] text-gray-400 font-mono tracking-widest hidden md:block">EMNİYET GENEL MÜDÜRLÜĞÜ</p>
+            </div>
+        </div>
+        <div class="z-10 flex items-center gap-2">
+            <span class="w-3 h-3 bg-red-600 rounded-full animate-pulse shadow-[0_0_10px_red]"></span>
+            <span class="w-3 h-3 bg-blue-600 rounded-full animate-pulse delay-75 shadow-[0_0_10px_blue]"></span>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+        
+        <div class="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
+            <i class="fa-solid fa-shield-cat text-[300px] text-gray-500"></i>
+        </div>
+
+        <div class="w-full md:w-96 bg-[#0f172a]/95 border-r border-white/5 flex flex-col z-10 h-full backdrop-blur-sm">
+            <div class="p-4 border-b border-white/5 bg-blue-900/10">
+                <h2 class="text-blue-400 text-xs font-bold uppercase mb-2"><i class="fa-solid fa-search mr-1"></i> GBT Sorgulama</h2>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="İsim veya ID giriniz..." class="input-style pl-10 text-sm">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-500"></i>
+                </div>
+            </div>
+            <div id="citizenList" class="flex-1 overflow-y-auto p-2 space-y-2 pb-20 md:pb-2">
+                <div class="text-center text-gray-500 text-xs mt-10">Sorgu yapmak için arama yapın...</div>
+            </div>
+        </div>
+
+        <div id="detailPanel" class="fixed inset-0 z-50 bg-[#0f172a] md:static md:bg-transparent md:flex-1 hidden md:flex flex-col overflow-hidden">
+            
+            <div class="md:hidden p-4 border-b border-white/10 flex items-center gap-3 bg-[#1e293b] shrink-0">
+                <button onclick="closeDetail()" class="w-8 h-8 rounded-full bg-white/10 text-gray-200 flex items-center justify-center hover:bg-white/20 active:scale-90 transition">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <span class="font-bold text-white text-lg">Dosya Detayı</span>
+            </div>
+
+            <div id="detailContent" class="flex-1 overflow-y-auto p-4 md:p-6 hidden w-full">
+                
+                <div class="flex flex-col md:flex-row gap-6 mb-8 items-center md:items-start bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div class="w-28 h-28 md:w-32 md:h-32 rounded-lg bg-gray-800 border-2 border-gray-600 overflow-hidden shadow-2xl relative shrink-0">
+                        <img id="p_avatar" src="" class="w-full h-full object-cover">
+                        <div class="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[10px] text-center py-1 font-mono">TC: <span id="p_uid">...</span></div>
+                    </div>
+                    <div class="flex-1 text-center md:text-left space-y-2 w-full">
+                        <h2 id="p_name" class="text-2xl md:text-3xl font-bold text-white uppercase tracking-wide break-words">İSİM SOYİSİM</h2>
+                        <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                            <span id="p_role" class="bg-blue-900/40 text-blue-400 border border-blue-500/30 px-3 py-1 rounded text-xs font-bold">VATANDAŞ</span>
+                            <span id="p_status" class="bg-green-900/40 text-green-400 border border-green-500/30 px-3 py-1 rounded text-xs font-bold">TEMİZ</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-4 w-full">
+                            <div class="bg-black/30 p-2 rounded border border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase">Banka Bakiyesi</p>
+                                <p id="p_balance" class="text-white font-mono font-bold">0 ₺</p>
+                            </div>
+                            <div class="bg-black/30 p-2 rounded border border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase">Sabıka Sayısı</p>
+                                <p id="p_crimeCount" class="text-red-400 font-mono font-bold">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20 md:pb-0">
+                    
+                    <div class="glass-panel p-5 rounded-xl border-l-4 border-red-600">
+                        <h3 class="text-red-500 font-bold mb-4 flex items-center gap-2 text-sm uppercase"><i class="fa-solid fa-file-pen"></i> Sabıka Kaydı Ekle</h3>
+                        <div class="space-y-3">
+                            <select id="crimeType" class="input-style bg-gray-900 text-sm">
+                                <option value="Hız İhlali">Hız İhlali</option>
+                                <option value="Hatalı Park">Hatalı Park</option>
+                                <option value="Kavga/Darp">Kavga/Darp</option>
+                                <option value="Hırsızlık">Hırsızlık</option>
+                                <option value="Polise Mukavemet">Polise Mukavemet</option>
+                                <option value="Yasadışı Madde">Yasadışı Madde</option>
+                                <option value="Silah Bulundurma">Silah Bulundurma</option>
+                            </select>
+                            <textarea id="crimeNote" rows="2" placeholder="Olay detayları..." class="input-style bg-gray-900 text-sm"></textarea>
+                            <button onclick="addCrime()" class="w-full bg-red-700 hover:bg-red-600 text-white font-bold py-3 rounded-lg btn-action shadow-lg text-sm">SİCİLE İŞLE</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-xl border-l-4 border-yellow-500">
+                        <h3 class="text-yellow-500 font-bold mb-4 flex items-center gap-2 text-sm uppercase"><i class="fa-solid fa-ticket"></i> Para Cezası Kes</h3>
+                        <div class="space-y-3">
+                            <input type="number" id="fineAmount" placeholder="Tutar (TL)" class="input-style bg-gray-900 font-mono text-lg">
+                            <input type="text" id="fineReason" placeholder="Ceza Sebebi" class="input-style bg-gray-900 text-sm">
+                            <button onclick="issueFine()" class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-3 rounded-lg btn-action shadow-lg text-sm">CEZAYI KES</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-xl border-l-4 border-blue-500 md:col-span-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="text-center sm:text-left">
+                            <h3 class="text-blue-400 font-bold text-sm uppercase">Aranıyor Durumu</h3>
+                            <p class="text-xs text-gray-400">Şahsın aranma durumunu manuel güncelle.</p>
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button onclick="setWanted(true)" class="flex-1 sm:flex-none bg-red-900/50 text-red-500 border border-red-600 px-4 py-3 rounded-lg font-bold text-xs hover:bg-red-900 transition">ARANIYOR YAP</button>
+                            <button onclick="setWanted(false)" class="flex-1 sm:flex-none bg-green-900/50 text-green-500 border border-green-600 px-4 py-3 rounded-lg font-bold text-xs hover:bg-green-900 transition">TEMİZE ÇIKAR</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-5 rounded-xl md:col-span-2">
+                        <h3 class="text-white font-bold mb-3 text-sm uppercase">Sabıka Geçmişi</h3>
+                        <div id="crimeHistory" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                            </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div id="emptyState" class="flex-1 hidden md:flex flex-col items-center justify-center text-gray-500 opacity-50">
+                <i class="fa-solid fa-fingerprint text-6xl mb-4"></i>
+                <p>İşlem yapmak için soldan bir vatandaş seçin.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="toast" class="fixed top-6 right-6 left-6 md:left-auto z-[100] hidden bg-gray-900 border border-white/20 text-white px-6 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3 transition-all transform -translate-y-20 opacity-0 justify-center md:justify-start"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, getDocs, collection, query, where, onSnapshot, addDoc, updateDoc, orderBy, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBlirRiiNPpdqmTAmq6DsSq8mCUlgBHgVc",
+            authDomain: "lilemir-new.firebaseapp.com",
+            databaseURL: "https://lilemir-new-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lilemir-new",
+            storageBucket: "lilemir-new.firebasestorage.app",
+            messagingSenderId: "339863121380",
+            appId: "1:339863121380:web:123195552e821b085e6bf1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let selectedUserId = null;
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const snap = await getDoc(doc(db, "users", user.uid));
+                if (snap.exists()) {
+                    currentUser = { id: user.uid, ...snap.data() };
+                    // Yetki Kontrolü
+                    if(currentUser.role !== 'Polis' && currentUser.role !== 'Admin' && currentUser.role !== 'Komiser') {
+                        document.body.innerHTML = '<div class="h-screen flex items-center justify-center bg-black text-red-500 font-bold text-2xl flex-col p-4 text-center"><span>YETKİSİZ GİRİŞ!</span><a href="mm (2).html" class="text-white text-sm mt-4 block underline">Geri Dön</a></div>';
+                    } else {
+                        loadCitizens();
+                    }
+                }
+            } else {
+                window.location.href = 'mm (2).html';
+            }
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        let allUsers = [];
+
+        function loadCitizens() {
+            onSnapshot(query(collection(db, "users"), orderBy("username")), (snap) => {
+                allUsers = [];
+                snap.forEach(d => allUsers.push({id: d.id, ...d.data()}));
+                filterList();
+            });
+        }
+
+        searchInput.addEventListener('input', filterList);
+
+        function filterList() {
+            const val = searchInput.value.toLowerCase();
+            const list = document.getElementById('citizenList');
+            list.innerHTML = '';
+            
+            const filtered = allUsers.filter(u => u.username.toLowerCase().includes(val) || u.id.toLowerCase().includes(val));
+            
+            filtered.forEach(u => {
+                const isWanted = u.sicilDurumu === 'Aranıyor';
+                const el = document.createElement('div');
+                el.className = `p-3 rounded-lg border border-white/5 cursor-pointer hover:bg-white/5 transition flex items-center justify-between mb-2 ${selectedUserId === u.id ? 'bg-blue-900/40 border-blue-500' : 'bg-gray-800/40'}`;
+                el.onclick = () => selectUser(u);
+                el.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 shrink-0 rounded bg-gray-700 flex items-center justify-center font-bold text-xs text-white border border-white/10 overflow-hidden">
+                            ${u.avatar ? `<img src="${u.avatar}" class="w-full h-full object-cover">` : u.username.charAt(0)}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-sm text-white truncate">${u.username}</div>
+                            <div class="text-[10px] text-gray-500 font-mono">TC: ${u.id.substring(0,5)}...</div>
+                        </div>
+                    </div>
+                    ${isWanted ? '<span class="badge bg-red-600 text-white animate-pulse shadow-lg shrink-0">ARANIYOR</span>' : ''}
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        async function selectUser(u) {
+            selectedUserId = u.id;
+            
+            // Mobil UI Toggle: Detay panelini aç, gizlilik sınıfını kaldır
+            const panel = document.getElementById('detailPanel');
+            panel.classList.remove('hidden');
+            // Mobilde 'flex' olması lazım
+            panel.classList.add('flex');
+            
+            document.getElementById('detailContent').classList.remove('hidden');
+            document.getElementById('emptyState').classList.add('hidden');
+            
+            // Verileri Doldur
+            document.getElementById('p_avatar').src = u.avatar || `https://ui-avatars.com/api/?name=${u.username}&background=random`;
+            document.getElementById('p_name').innerText = u.username;
+            document.getElementById('p_uid').innerText = u.id;
+            document.getElementById('p_role').innerText = u.role;
+            document.getElementById('p_balance').innerText = (u.bankAccount?.balance || 0).toLocaleString() + ' ₺';
+            
+            const statusEl = document.getElementById('p_status');
+            if(u.sicilDurumu === 'Aranıyor') {
+                statusEl.className = "bg-red-900/40 text-red-500 border border-red-500/30 px-3 py-1 rounded text-xs font-bold animate-pulse";
+                statusEl.innerText = "ARANIYOR";
+            } else {
+                statusEl.className = "bg-green-900/40 text-green-400 border border-green-500/30 px-3 py-1 rounded text-xs font-bold";
+                statusEl.innerText = "TEMİZ";
+            }
+
+            loadCrimes(u.id);
+            filterList();
+        }
+
+        function loadCrimes(uid) {
+            const list = document.getElementById('crimeHistory');
+            list.innerHTML = '<div class="text-xs text-gray-500 text-center py-4">Yükleniyor...</div>';
+            
+            onSnapshot(query(collection(db, "users", uid, "criminal_records"), orderBy("date", "desc")), (snap) => {
+                list.innerHTML = '';
+                document.getElementById('p_crimeCount').innerText = snap.size;
+                if(snap.empty) {
+                    list.innerHTML = '<div class="text-xs text-gray-500 italic text-center py-4">Sicil temiz.</div>';
+                    return;
+                }
+                snap.forEach(d => {
+                    const r = d.data();
+                    const date = r.date ? new Date(r.date.toDate()).toLocaleDateString() : '-';
+                    list.innerHTML += `
+                        <div class="bg-black/30 p-3 rounded-lg border border-white/5 text-xs mb-2">
+                            <div class="flex justify-between font-bold text-red-400 mb-1">
+                                <span>${r.type}</span>
+                                <span class="text-gray-500">${date}</span>
+                            </div>
+                            <div class="text-gray-300 mb-2">${r.note || ''}</div>
+                            <div class="text-[9px] text-blue-500 pt-1 border-t border-white/5">Memur: ${r.officer}</div>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        // Mobil Geri Butonu Fonksiyonu
+        window.closeDetail = () => {
+            const panel = document.getElementById('detailPanel');
+            panel.classList.add('hidden');
+            panel.classList.remove('flex');
+            selectedUserId = null;
+            filterList();
+        };
+
+        window.addCrime = async () => {
+            if(!selectedUserId) return;
+            const type = document.getElementById('crimeType').value;
+            const note = document.getElementById('crimeNote').value;
+            
+            if(!confirm(`${type} suçu işlenecek. Onaylıyor musun?`)) return;
+
+            try {
+                await addDoc(collection(db, "users", selectedUserId, "criminal_records"), {
+                    type: type, note: note, officer: currentUser.username, date: serverTimestamp()
+                });
+                
+                if(['Hırsızlık', 'Polise Mukavemet', 'Silah Bulundurma'].includes(type)) {
+                    await updateDoc(doc(db, "users", selectedUserId), { sicilDurumu: 'Kirli' });
+                }
+
+                document.getElementById('crimeNote').value = '';
+                showToast("Sicil Kaydı Eklendi", "success");
+            } catch(e) { showToast("Hata oluştu", "error"); }
+        };
+
+        window.issueFine = async () => {
+            if(!selectedUserId) return;
+            const amt = parseInt(document.getElementById('fineAmount').value);
+            const reason = document.getElementById('fineReason').value;
+            
+            if(!amt || amt <= 0) return showToast("Geçersiz Tutar", "error");
+            if(!confirm(`${amt} TL ceza kesilecek. Emin misin?`)) return;
+
+            try {
+                await runTransaction(db, async(t) => {
+                    const ref = doc(db, "users", selectedUserId);
+                    const docSnap = await t.get(ref);
+                    const bal = docSnap.data().bankAccount?.balance || 0;
+                    const debt = docSnap.data().bankAccount?.creditDebt || 0;
+                    
+                    if(bal >= amt) {
+                        t.update(ref, { "bankAccount.balance": bal - amt });
+                    } else {
+                        t.update(ref, { "bankAccount.creditDebt": debt + amt });
+                    }
+                });
+                
+                await addDoc(collection(db, "users", selectedUserId, "criminal_records"), {
+                    type: "Para Cezası", note: `${amt} TL - ${reason}`, officer: currentUser.username, date: serverTimestamp()
+                });
+
+                document.getElementById('fineAmount').value = '';
+                document.getElementById('fineReason').value = '';
+                showToast("Ceza Kesildi", "success");
+            } catch(e) { showToast("İşlem Başarısız", "error"); }
+        };
+
+        window.setWanted = async (status) => {
+            if(!selectedUserId) return;
+            const newVal = status ? 'Aranıyor' : 'Temiz';
+            await updateDoc(doc(db, "users", selectedUserId), { sicilDurumu: newVal });
+            showToast(status ? "Şahıs ARANIYOR!" : "Şahıs Temize Çıkarıldı", status ? "error" : "success");
+            
+            // Listeyi yenilemeden UI güncellemek için:
+            const userInList = allUsers.find(u => u.id === selectedUserId);
+            if(userInList) { userInList.sicilDurumu = newVal; filterList(); }
+            selectUser({id: selectedUserId, ...allUsers.find(u=>u.id===selectedUserId)});
+        };
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.className = `fixed top-6 right-6 left-6 md:left-auto md:w-auto z-[100] bg-gray-900 border ${type==='error'?'border-red-500 text-red-400':'border-green-500 text-green-400'} px-6 py-4 rounded-xl shadow-2xl font-bold flex items-center gap-3 transition-all transform duration-300 justify-center md:justify-start`;
+            t.innerHTML = `<i class="fa-solid ${type==='error'?'fa-triangle-exclamation':'fa-check-circle'} text-xl"></i> ${msg}`;
+            t.classList.remove('hidden', '-translate-y-20', 'opacity-0');
+            setTimeout(() => { t.classList.add('-translate-y-20', 'opacity-0'); setTimeout(()=>t.classList.add('hidden'), 300); }, 3000);
+        }
+
+        window.closeDetail = closeDetail;
+        window.addCrime = addCrime;
+        window.issueFine = issueFine;
+        window.setWanted = setWanted;
+    </script>
+</body>
+</html>

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BL Adalet Sarayı</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bl: { dark: '#020617' },
+                        gold: { 500: '#eab308', 600: '#ca8a04' }
+                    },
+                    fontFamily: {
+                        serif: ['Merriweather', 'serif'],
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        body {
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+
+        .font-court { font-family: 'Merriweather', serif; }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Wood Texture for Judge Table */
+        .wood-panel {
+            background: #3f2e22; 
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 4px);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        /* Gavel Animation */
+        @keyframes hammerStrike {
+            0% { transform: rotate(0deg); }
+            30% { transform: rotate(-45deg); }
+            100% { transform: rotate(0deg); }
+        }
+        .animate-hammer { animation: hammerStrike 0.4s ease-in-out; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="h-[100dvh] flex flex-col">
+
+    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950">
+        <div class="glass p-8 rounded-xl w-full max-w-md text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-700 via-yellow-500 to-yellow-700"></div>
+            
+            <i class="fa-solid fa-scale-balanced text-5xl text-yellow-500 mb-6"></i>
+            <h1 class="text-3xl font-court font-bold text-white mb-2">Adalet Sarayı</h1>
+            <p class="text-gray-400 text-sm mb-8">Sadece Yetkili Yargı Personeli</p>
+            
+            <form id="loginForm" class="space-y-4">
+                <input type="number" id="idNo" placeholder="Sicil / Kimlik No" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white outline-none focus:border-yellow-600">
+                <input type="password" id="password" placeholder="Şifre" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white outline-none focus:border-yellow-600">
+                <button type="submit" class="w-full bg-yellow-700 hover:bg-yellow-600 text-white font-bold py-3 rounded-lg transition shadow-lg">Giriş Yap</button>
+            </form>
+            <p id="loginError" class="text-red-500 text-xs mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <div id="lobbyScreen" class="hidden w-full h-full flex flex-col">
+        <header class="h-16 glass flex items-center justify-between px-6 z-20">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-gavel text-yellow-500 text-xl"></i>
+                <h2 class="font-court font-bold text-lg text-white">Dava Dosyaları</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden md:block">
+                    <p id="myRole" class="text-xs font-bold text-yellow-500 uppercase">HAKİM</p>
+                    <p id="myName" class="text-sm text-white">İsim Soyisim</p>
+                </div>
+                <button id="logoutBtn" class="bg-red-900/50 hover:bg-red-900 text-red-300 p-2 rounded-lg transition"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl text-gray-300">Görülecek Davalar</h3>
+                <button onclick="createMockCase()" class="bg-blue-600/30 border border-blue-500/50 text-blue-300 px-4 py-2 rounded-lg text-xs hover:bg-blue-600/50 transition">
+                    <i class="fa-solid fa-plus mr-1"></i> Yeni Dava Aç (Test)
+                </button>
+            </div>
+
+            <div id="caseList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="text-center w-full col-span-full py-10 text-gray-500">Yükleniyor...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="courtroomScreen" class="hidden fixed inset-0 z-40 bg-gray-900 flex flex-col">
+        
+        <div class="h-14 glass flex items-center justify-between px-4 border-b border-gray-700 shrink-0">
+            <button onclick="leaveCourt()" class="text-gray-400 hover:text-white flex items-center gap-2">
+                <i class="fa-solid fa-chevron-left"></i> <span class="hidden md:inline">Lobiye Dön</span>
+            </button>
+            <div class="text-center">
+                <h2 id="courtTitle" class="font-court font-bold text-white">Dava #000</h2>
+                <span id="courtStatus" class="text-[10px] uppercase tracking-wider bg-green-900 text-green-400 px-2 rounded">OTURUM AÇIK</span>
+            </div>
+            <div class="w-20 flex justify-end">
+                <button id="verdictBtn" onclick="openVerdictModal()" class="hidden bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-red-900/50 shadow-lg animate-pulse">
+                    <i class="fa-solid fa-gavel mr-1"></i> KARAR
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+            
+            <div class="w-full md:w-3/4 flex flex-col relative bg-gradient-to-b from-gray-900 to-gray-800">
+                
+                <div class="flex-1 relative flex flex-col items-center justify-start pt-10 px-4 gap-8 overflow-y-auto">
+                    
+                    <div class="relative flex flex-col items-center z-10">
+                        <div class="wood-panel px-10 py-4 rounded-t-2xl border-4 border-[#2a1a10] shadow-2xl relative">
+                            <div class="absolute -top-12 left-1/2 -translate-x-1/2">
+                                <img id="judgeAvatar" src="https://ui-avatars.com/api/?name=Hakim" class="w-20 h-20 rounded-full border-4 border-yellow-600 shadow-xl bg-gray-800">
+                            </div>
+                            <div class="mt-8 text-center">
+                                <div class="bg-black/40 px-3 py-1 rounded text-xs text-yellow-500 font-bold mb-1">YÜCE MAHKEME</div>
+                                <div id="judgeName" class="text-white font-court font-bold text-lg">Atanıyor...</div>
+                            </div>
+                            <i id="courtHammer" class="fa-solid fa-gavel text-4xl text-[#5c3a21] absolute -right-8 bottom-2 transform -rotate-12 drop-shadow-xl"></i>
+                        </div>
+                        <div class="w-full h-20 bg-gradient-to-b from-[#3f2e22] to-transparent w-64 opacity-50"></div>
+                    </div>
+
+                    <div class="w-full max-w-2xl bg-black/30 border border-white/10 rounded-xl p-6 backdrop-blur-sm mt-auto mb-10">
+                        <h4 class="text-xs text-gray-500 uppercase tracking-widest mb-4 border-b border-gray-700 pb-2">SANIK KÜRSÜSÜ</h4>
+                        <div class="flex items-center gap-4">
+                            <img id="defendantAvatar" src="" class="w-16 h-16 rounded-md bg-gray-700 object-cover grayscale">
+                            <div>
+                                <h3 id="defendantName" class="text-xl font-bold text-white">Sanık İsmi</h3>
+                                <p class="text-sm text-red-400 font-mono mt-1">Suçlama: <span id="caseCharge" class="text-gray-300">...</span></p>
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-gray-900/50 p-3 rounded text-sm text-gray-400 italic">
+                            "<span id="caseDesc">...</span>"
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="h-1/3 md:h-64 bg-gray-950 border-t border-gray-800 flex flex-col">
+                    <div id="courtLogs" class="flex-1 overflow-y-auto p-4 space-y-2 text-sm font-mono">
+                        </div>
+                    <form id="courtChatForm" class="p-2 bg-gray-900 border-t border-gray-800 flex gap-2">
+                        <input type="text" id="courtInput" class="flex-1 bg-gray-800 rounded px-3 py-2 text-white outline-none focus:ring-1 focus:ring-yellow-600" placeholder="İfade ver...">
+                        <button type="submit" class="bg-yellow-700 hover:bg-yellow-600 text-white px-4 rounded font-bold">KONUŞ</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="hidden md:flex w-1/4 bg-gray-950 border-l border-gray-800 flex-col p-4">
+                <h3 class="text-xs font-bold text-gray-500 uppercase mb-4">Salondakiler</h3>
+                <div id="attendeesList" class="space-y-3">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="verdictModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4">
+        <div class="glass p-8 rounded-xl w-full max-w-lg border border-red-900/50 shadow-[0_0_50px_rgba(220,38,38,0.2)]">
+            <h2 class="text-3xl font-court font-bold text-white mb-2 text-center">Nihai Karar</h2>
+            <p class="text-center text-gray-400 text-sm mb-6">Bu karar geri alınamaz ve sanığın siciline işlenir.</p>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button onclick="setVerdictType('SUÇLU')" id="btnGuilty" class="verdict-opt p-4 rounded-xl border border-gray-700 bg-gray-800 hover:bg-red-900/30 hover:border-red-500 transition text-center group">
+                    <i class="fa-solid fa-handcuffs text-3xl text-gray-500 group-hover:text-red-500 mb-2"></i>
+                    <div class="font-bold text-white">SUÇLU</div>
+                </button>
+                <button onclick="setVerdictType('BERAAT')" id="btnInnocent" class="verdict-opt p-4 rounded-xl border border-gray-700 bg-gray-800 hover:bg-green-900/30 hover:border-green-500 transition text-center group">
+                    <i class="fa-solid fa-dove text-3xl text-gray-500 group-hover:text-green-500 mb-2"></i>
+                    <div class="font-bold text-white">BERAAT</div>
+                </button>
+            </div>
+
+            <div id="sentenceInputDiv" class="hidden mb-6">
+                <label class="block text-xs text-gray-400 mb-1">Hüküm / Ceza Detayı</label>
+                <textarea id="sentenceText" class="w-full bg-gray-900 border border-gray-700 rounded p-3 text-white h-24" placeholder="Örn: 5 yıl hapis cezası ve kamu hizmeti..."></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('verdictModal').classList.add('hidden')" class="flex-1 py-3 bg-gray-800 rounded hover:bg-gray-700 text-gray-300">İptal</button>
+                <button onclick="submitVerdict()" class="flex-1 py-3 bg-red-700 hover:bg-red-600 text-white font-bold rounded shadow-lg shadow-red-900/40">KARARI AÇIKLA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, serverTimestamp, setDoc, orderBy, runTransaction, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBlirRiiNPpdqmTAmq6DsSq8mCUlgBHgVc",
+            authDomain: "lilemir-new.firebaseapp.com",
+            databaseURL: "https://lilemir-new-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lilemir-new",
+            storageBucket: "lilemir-new.firebasestorage.app",
+            messagingSenderId: "339863121380",
+            appId: "1:339863121380:web:123195552e821b085e6bf1",
+            measurementId: "G-CC3033Q4EM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let activeCase = null;
+        let activeCaseUnsub = null;
+        let logsUnsub = null;
+        let selectedVerdict = null;
+
+        // AUTH CHECK
+        onAuthStateChanged(auth, async (user) => {
+            if(user) {
+                const docSnap = await getDoc(doc(db, "users", user.uid));
+                if(docSnap.exists()) {
+                    const data = docSnap.data();
+                    const allowedRoles = ['Hakim', 'Avukat', 'Savcı', 'Admin', 'Polis'];
+                    if(allowedRoles.includes(data.role)) {
+                        currentUser = data;
+                        document.getElementById('loginScreen').classList.add('hidden');
+                        document.getElementById('lobbyScreen').classList.remove('hidden');
+                        updateLobbyUI();
+                        loadCases();
+                    } else {
+                        document.getElementById('loginError').innerText = "Bu alana giriş yetkiniz yok.";
+                        document.getElementById('loginError').classList.remove('hidden');
+                        signOut(auth);
+                    }
+                }
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('lobbyScreen').classList.add('hidden');
+            }
+        });
+
+        // UI UPDATES
+        function updateLobbyUI() {
+            document.getElementById('myName').innerText = currentUser.username;
+            document.getElementById('myRole').innerText = currentUser.role;
+        }
+
+        // LOAD CASES
+        function loadCases() {
+            const q = query(collection(db, "cases"), orderBy("createdAt", "desc"));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('caseList');
+                list.innerHTML = '';
+                
+                if(snap.empty) {
+                    list.innerHTML = '<div class="col-span-full text-center text-gray-500 mt-10">Görülecek aktif dava bulunmuyor.</div>';
+                    return;
+                }
+
+                snap.forEach(d => {
+                    const c = d.data();
+                    const isClosed = c.status === 'closed';
+                    const div = document.createElement('div');
+                    div.className = `glass p-6 rounded-xl border-l-4 ${isClosed ? 'border-gray-500 opacity-75' : 'border-yellow-500'} hover:bg-gray-800/50 transition relative group`;
+                    
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded ${isClosed ? 'bg-gray-700 text-gray-400' : 'bg-green-900 text-green-400'} uppercase">${isClosed ? 'Dava Kapandı' : 'Oturum Açık'}</span>
+                            <span class="text-xs text-gray-500 font-mono">#${d.id.slice(0,5)}</span>
+                        </div>
+                        <h3 class="font-court font-bold text-xl text-white mb-1">${c.title}</h3>
+                        <p class="text-sm text-gray-400 mb-4 line-clamp-2">${c.description}</p>
+                        
+                        <div class="flex items-center gap-2 mb-4">
+                            <i class="fa-solid fa-user-injured text-red-400"></i>
+                            <span class="text-sm text-gray-300">Sanık: <span class="font-bold text-white">${c.defendantName}</span></span>
+                        </div>
+
+                        <button onclick="enterCourt('${d.id}')" class="w-full bg-gray-800 border border-gray-600 hover:bg-yellow-700 hover:border-yellow-600 hover:text-white text-gray-300 py-2 rounded-lg transition font-bold text-sm">
+                            ${isClosed ? 'Dosyayı İncele' : 'Mahkeme Salonuna Gir'}
+                        </button>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        // --- COURT ROOM LOGIC ---
+
+        window.enterCourt = async (caseId) => {
+            document.getElementById('lobbyScreen').classList.add('hidden');
+            document.getElementById('courtroomScreen').classList.remove('hidden');
+            
+            gsap.from("#courtroomScreen", {opacity: 0, duration: 0.5});
+
+            const caseRef = doc(db, "cases", caseId);
+            
+            activeCaseUnsub = onSnapshot(caseRef, (snap) => {
+                if(!snap.exists()) return leaveCourt();
+                activeCase = { id: snap.id, ...snap.data() };
+                
+                document.getElementById('courtTitle').innerText = activeCase.title;
+                document.getElementById('caseCharge').innerText = activeCase.charge || 'Belirtilmemiş';
+                document.getElementById('caseDesc').innerText = activeCase.description;
+                document.getElementById('defendantName').innerText = activeCase.defendantName;
+                document.getElementById('defendantAvatar').src = `https://ui-avatars.com/api/?name=${activeCase.defendantName}&background=random`;
+                
+                document.getElementById('judgeName').innerText = activeCase.judgeName || 'Atanmamış';
+                if(activeCase.judgeName) {
+                    document.getElementById('judgeAvatar').src = `https://ui-avatars.com/api/?name=${activeCase.judgeName}&background=0f172a&color=eab308`;
+                }
+
+                const statusEl = document.getElementById('courtStatus');
+                if(activeCase.status === 'closed') {
+                    statusEl.innerText = "DAVA KAPANDI";
+                    statusEl.className = "text-[10px] uppercase tracking-wider bg-red-900 text-red-400 px-2 rounded";
+                    document.getElementById('verdictBtn').classList.add('hidden');
+                } else {
+                    statusEl.innerText = "OTURUM AÇIK";
+                    statusEl.className = "text-[10px] uppercase tracking-wider bg-green-900 text-green-400 px-2 rounded";
+                    
+                    if(currentUser.role === 'Hakim') {
+                        document.getElementById('verdictBtn').classList.remove('hidden');
+                        if(!activeCase.judgeId) {
+                            updateDoc(caseRef, { judgeId: currentUser.uid, judgeName: currentUser.username });
+                        }
+                    }
+                }
+            });
+
+            const logsRef = collection(db, "cases", caseId, "logs");
+            const qLogs = query(logsRef, orderBy("createdAt", "asc"));
+            
+            logsUnsub = onSnapshot(qLogs, (snap) => {
+                const container = document.getElementById('courtLogs');
+                container.innerHTML = '';
+                
+                snap.forEach(d => {
+                    const l = d.data();
+                    const div = document.createElement('div');
+                    
+                    if(l.type === 'verdict') {
+                        div.className = "bg-red-900/20 border border-red-500/50 p-3 rounded text-center my-4";
+                        div.innerHTML = `
+                            <p class="text-red-500 font-bold font-court text-lg"><i class="fa-solid fa-gavel mr-2"></i>KARAR AÇIKLANDI</p>
+                            <p class="text-white text-xl font-bold mt-1">${l.verdict}</p>
+                            <p class="text-gray-400 text-xs mt-2">${l.sentence}</p>
+                        `;
+                        const hammer = document.getElementById('courtHammer');
+                        hammer.classList.add('animate-hammer');
+                        setTimeout(() => hammer.classList.remove('animate-hammer'), 1000);
+
+                    } else if (l.type === 'system') {
+                         div.className = "text-center text-gray-500 text-xs italic my-2";
+                         div.innerText = l.text;
+                    } else {
+                        const color = l.role === 'Hakim' ? 'text-yellow-500' : (l.role === 'Savcı' ? 'text-blue-400' : 'text-gray-300');
+                        div.innerHTML = `<span class="font-bold ${color} text-xs uppercase">[${l.role}] ${l.username}:</span> <span class="text-gray-200">${l.text}</span>`;
+                    }
+                    container.appendChild(div);
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        };
+
+        window.leaveCourt = () => {
+            if(activeCaseUnsub) activeCaseUnsub();
+            if(logsUnsub) logsUnsub();
+            activeCase = null;
+            document.getElementById('courtroomScreen').classList.add('hidden');
+            document.getElementById('lobbyScreen').classList.remove('hidden');
+        };
+
+        // --- ACTIONS ---
+
+        document.getElementById('courtChatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inp = document.getElementById('courtInput');
+            const txt = inp.value.trim();
+            if(!txt || !activeCase) return;
+            
+            if(activeCase.status === 'closed') {
+                showToast("Dava kapandığı için konuşamazsınız.", "error");
+                return;
+            }
+
+            inp.value = '';
+            await addDoc(collection(db, "cases", activeCase.id, "logs"), {
+                text: txt,
+                username: currentUser.username,
+                role: currentUser.role,
+                type: 'chat',
+                createdAt: serverTimestamp()
+            });
+        });
+
+        window.openVerdictModal = () => {
+            document.getElementById('verdictModal').classList.remove('hidden');
+            gsap.from("#verdictModal > div", {scale: 0.8, opacity: 0, duration: 0.3});
+        };
+
+        window.setVerdictType = (type) => {
+            selectedVerdict = type;
+            document.querySelectorAll('.verdict-opt').forEach(el => el.classList.remove('border-yellow-500', 'bg-gray-700'));
+            
+            if(type === 'SUÇLU') {
+                document.getElementById('btnGuilty').classList.add('border-yellow-500', 'bg-gray-700');
+                document.getElementById('sentenceInputDiv').classList.remove('hidden');
+            } else {
+                document.getElementById('btnInnocent').classList.add('border-yellow-500', 'bg-gray-700');
+                document.getElementById('sentenceInputDiv').classList.add('hidden');
+            }
+        };
+
+        // --- FIX: UPDATED VERDICT FUNCTION WITH SAFEGUARDS ---
+        window.submitVerdict = async () => {
+            if(!selectedVerdict) return showToast("Lütfen bir karar seçin.", "error");
+            
+            const sentence = document.getElementById('sentenceText').value;
+            if(selectedVerdict === 'SUÇLU' && !sentence) return showToast("Hüküm detayını yazmalısınız.", "error");
+
+            document.getElementById('verdictModal').classList.add('hidden');
+            
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const caseRef = doc(db, "cases", activeCase.id);
+                    
+                    // 1. Sanık ID'sinin doğruluğunu kontrol et
+                    if (!activeCase.defendantId) throw new Error("Sanık ID'si bulunamadı!");
+                    
+                    const defendantRef = doc(db, "users", activeCase.defendantId);
+                    const defendantDoc = await transaction.get(defendantRef);
+
+                    // 2. Kasa güncelle
+                    transaction.update(caseRef, {
+                        status: 'closed',
+                        finalVerdict: selectedVerdict,
+                        finalSentence: sentence || 'Beraat'
+                    });
+
+                    // 3. Log Ekle
+                    const logRef = doc(collection(db, "cases", activeCase.id, "logs"));
+                    transaction.set(logRef, {
+                        type: 'verdict',
+                        verdict: selectedVerdict === 'SUÇLU' ? 'SUÇLU BULUNDU' : 'BERAAT ETTİ',
+                        sentence: sentence || 'Sanık tüm suçlamalardan aklandı.',
+                        createdAt: serverTimestamp()
+                    });
+
+                    // 4. Sicil Güncelle (Güvenli arrayUnion)
+                    if(selectedVerdict === 'SUÇLU' && defendantDoc.exists()) {
+                        transaction.update(defendantRef, {
+                            sicilDurumu: 'Kirli',
+                            criminalRecord: arrayUnion({
+                                caseId: activeCase.id || 'Bilinmiyor',
+                                charge: activeCase.charge || 'Belirtilmemiş Suç', // undefined koruması
+                                sentence: sentence || 'Cezasız',                 // undefined koruması
+                                date: new Date().toISOString()
+                            })
+                        });
+                    }
+                });
+                
+                showToast("Karar başarıyla işlendi.", "success");
+
+            } catch (e) {
+                console.error(e);
+                showToast("İşlem hatası: " + e.message, "error");
+            }
+        };
+
+        window.createMockCase = async () => {
+            const title = prompt("Dava Başlığı (Örn: Devlet vs. Ahmet)");
+            if(!title) return;
+            const defendantName = prompt("Sanık Adı:");
+            const desc = prompt("Olay Açıklaması:");
+            const defendantId = prompt("Sanık UID (Database'den kopyala):");
+            if(!defendantId) return;
+
+            await addDoc(collection(db, "cases"), {
+                title,
+                description: desc,
+                charge: 'Kamu Düzenini Bozma',
+                defendantName,
+                defendantId, 
+                status: 'active',
+                createdAt: serverTimestamp()
+            });
+            showToast("Dava oluşturuldu", "success");
+        };
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('idNo').value;
+            const pass = document.getElementById('password').value;
+            try {
+                await signInWithEmailAndPassword(auth, `${id}@bl.gov`, pass);
+            } catch (error) {
+                document.getElementById('loginError').innerText = "Giriş başarısız.";
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = `p-4 rounded shadow-lg text-white font-bold ${type==='error'?'bg-red-600':'bg-green-600'}`;
+            t.innerText = msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

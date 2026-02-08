@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BL Mobile Messenger</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bl: { dark: '#020617' }
+                    },
+                    screens: {
+                        'xs': '475px',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        body {
+            background-image: radial-gradient(circle at 10% 20%, #1e1b4b 0%, #020617 100%);
+            background-attachment: fixed;
+            color: #e2e8f0;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Bubbles */
+        .msg-sent {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-radius: 18px 18px 4px 18px;
+        }
+        .msg-received {
+            background: #334155;
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="h-[100dvh] w-full flex flex-col items-center justify-center">
+
+    <div id="loginScreen" class="w-full h-full md:h-auto md:max-w-md p-6 glass-panel md:rounded-2xl z-50 flex flex-col justify-center relative bg-gray-900/90">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
+                <i class="fa-solid fa-comments text-4xl text-blue-400"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-white">BL Messenger</h1>
+            <p class="text-gray-400 text-sm">Giriş Yapın</p>
+        </div>
+        <form id="loginForm" class="space-y-4">
+            <input type="number" id="idNo" placeholder="Kimlik No" class="w-full bg-gray-800 border border-gray-700 rounded-xl py-4 px-4 text-white focus:border-blue-500 outline-none text-lg">
+            <input type="password" id="password" placeholder="Şifre" class="w-full bg-gray-800 border border-gray-700 rounded-xl py-4 px-4 text-white focus:border-blue-500 outline-none text-lg">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg text-lg">
+                Giriş Yap
+            </button>
+        </form>
+    </div>
+
+    <div id="appContainer" class="hidden w-full h-full flex overflow-hidden relative bg-gray-950">
+        
+        <aside id="sidebarPanel" class="w-full md:w-80 h-full flex flex-col bg-gray-900/80 border-r border-gray-800 z-20">
+            
+            <div class="p-4 glass safe-area-top">
+                <div class="flex items-center gap-3 mb-4">
+                    <img id="myAvatar" src="" class="w-12 h-12 rounded-full border border-gray-600 bg-gray-800">
+                    <div class="flex-1 overflow-hidden">
+                        <h3 id="myUsername" class="font-bold text-white truncate text-lg">...</h3>
+                        <p class="text-xs text-green-400 font-mono">● ONLINE</p>
+                    </div>
+                    <button id="logoutBtn" class="w-10 h-10 rounded-full bg-red-900/30 text-red-400 flex items-center justify-center">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                </div>
+                
+                <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 flex justify-between items-center">
+                    <span class="text-xs text-gray-400 uppercase font-bold">Cüzdan</span>
+                    <div class="flex items-center gap-2">
+                        <span id="myBalance" class="text-lg font-mono text-white font-bold">0</span>
+                        <i class="fa-solid fa-coins text-yellow-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div id="usersList" class="flex-1 overflow-y-auto p-2 space-y-2 pb-20 md:pb-2">
+                </div>
+        </aside>
+
+        <main id="chatPanel" class="hidden md:flex flex-1 flex-col h-full bg-gray-950/50 relative w-full absolute md:relative z-30 inset-0">
+            
+            <div id="emptyState" class="hidden md:flex absolute inset-0 flex-col items-center justify-center text-gray-600">
+                <i class="fa-regular fa-paper-plane text-5xl mb-4"></i>
+                <p>Bir sohbet seçin.</p>
+            </div>
+
+            <div id="chatInterface" class="flex flex-col h-full w-full hidden"> <div class="h-16 glass flex items-center px-4 justify-between shrink-0">
+                    <div class="flex items-center gap-3">
+                        <button onclick="closeChatMobile()" class="md:hidden w-10 h-10 -ml-2 flex items-center justify-center text-white">
+                            <i class="fa-solid fa-arrow-left text-xl"></i>
+                        </button>
+                        
+                        <img id="chatHeaderAvatar" src="" class="w-10 h-10 rounded-full bg-gray-700">
+                        <div>
+                            <h3 id="chatHeaderName" class="font-bold text-white text-base">Kullanıcı</h3>
+                            <p class="text-xs text-gray-400">Online</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="toggleCoinModal()" class="bg-yellow-600/20 text-yellow-500 px-4 py-2 rounded-full text-xs font-bold border border-yellow-600/40">
+                        <i class="fa-solid fa-coins mr-1"></i> Gönder
+                    </button>
+                </div>
+
+                <div id="messagesFeed" class="flex-1 overflow-y-auto p-4 space-y-3 bg-black/20">
+                    </div>
+
+                <div class="p-3 glass shrink-0 pb-6 md:pb-3">
+                    <form id="msgForm" class="flex gap-2">
+                        <input type="text" id="msgInput" placeholder="Mesaj yaz..." class="flex-1 bg-gray-800 border border-gray-700 rounded-full px-5 py-3 text-white outline-none">
+                        <button type="submit" class="bg-blue-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <div id="coinModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+        <div class="bg-gray-900 border border-gray-700 p-6 rounded-2xl w-full max-w-xs text-center">
+            <h3 class="text-xl font-bold text-white mb-1">Coin Gönder</h3>
+            <p id="modalReceiverName" class="text-sm text-yellow-500 mb-6 font-bold">...</p>
+            
+            <input type="number" id="coinAmount" placeholder="Miktar" class="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white text-center text-xl mb-4 font-mono outline-none">
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="toggleCoinModal()" class="py-3 bg-gray-800 rounded-lg text-gray-400">İptal</button>
+                <button onclick="confirmTransfer()" class="py-3 bg-yellow-600 rounded-lg text-black font-bold">Gönder</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed top-5 left-5 right-5 z-[70] flex flex-col gap-2 pointer-events-none"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, addDoc, collection, query, orderBy, serverTimestamp, runTransaction, increment, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBlirRiiNPpdqmTAmq6DsSq8mCUlgBHgVc",
+            authDomain: "lilemir-new.firebaseapp.com",
+            databaseURL: "https://lilemir-new-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "lilemir-new",
+            storageBucket: "lilemir-new.firebasestorage.app",
+            messagingSenderId: "339863121380",
+            appId: "1:339863121380:web:123195552e821b085e6bf1",
+            measurementId: "G-CC3033Q4EM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+        let activeChatUser = null;
+        let chatUnsub = null;
+
+        // UI ELEMENTS
+        const loginScreen = document.getElementById('loginScreen');
+        const appContainer = document.getElementById('appContainer');
+        const sidebarPanel = document.getElementById('sidebarPanel');
+        const chatPanel = document.getElementById('chatPanel');
+        const chatInterface = document.getElementById('chatInterface');
+        const emptyState = document.getElementById('emptyState');
+
+        // --- AUTH ---
+        onAuthStateChanged(auth, (user) => {
+            if(user) {
+                const userRef = doc(db, "users", user.uid);
+                onSnapshot(userRef, (snap) => {
+                    if(snap.exists()) {
+                        currentUser = snap.data();
+                        if(currentUser.balance === undefined) updateDoc(userRef, {balance: 1000});
+                        updateUI();
+                        showApp();
+                    }
+                });
+                loadUsers();
+            } else {
+                showLogin();
+            }
+        });
+
+        // --- NAVIGATION LOGIC (CRITICAL FOR MOBILE) ---
+        window.openChat = (user) => {
+            activeChatUser = user;
+
+            // 1. UPDATE HEADER
+            document.getElementById('chatHeaderName').innerText = user.username;
+            document.getElementById('modalReceiverName').innerText = user.username;
+            document.getElementById('chatHeaderAvatar').src = user.avatar || `https://ui-avatars.com/api/?name=${user.username}`;
+
+            // 2. MOBILE TOGGLE (The Fix)
+            if(window.innerWidth < 768) {
+                sidebarPanel.classList.add('hidden'); // Hide list
+                chatPanel.classList.remove('hidden'); // Show chat container
+                chatPanel.classList.add('flex');
+            }
+
+            // 3. DESKTOP TOGGLE
+            emptyState.classList.remove('md:flex');
+            emptyState.classList.add('hidden');
+            
+            chatInterface.classList.remove('hidden');
+            chatInterface.classList.add('flex');
+
+            // 4. LOAD MESSAGES
+            loadMessages(user.uid);
+        };
+
+        window.closeChatMobile = () => {
+            // Hides chat, shows list
+            chatPanel.classList.add('hidden');
+            chatPanel.classList.remove('flex');
+            
+            sidebarPanel.classList.remove('hidden');
+            activeChatUser = null;
+        };
+
+        // --- CORE FUNCTIONS ---
+        function updateUI() {
+            document.getElementById('myUsername').innerText = currentUser.username;
+            document.getElementById('myAvatar').src = currentUser.avatar || `https://ui-avatars.com/api/?name=${currentUser.username}`;
+            document.getElementById('myBalance').innerText = currentUser.balance || 0;
+        }
+
+        function showApp() {
+            loginScreen.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+        }
+
+        function showLogin() {
+            loginScreen.classList.remove('hidden');
+            appContainer.classList.add('hidden');
+        }
+
+        // --- USERS ---
+        function loadUsers() {
+            const q = query(collection(db, "users"), orderBy("username"));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('usersList');
+                list.innerHTML = '';
+                snap.forEach(d => {
+                    const u = d.data();
+                    if(u.uid === auth.currentUser.uid) return;
+
+                    const div = document.createElement('div');
+                    // CLICK EVENT HERE IS CRITICAL
+                    div.onclick = () => window.openChat(u);
+                    
+                    div.className = "flex items-center gap-3 p-4 bg-gray-800/40 rounded-xl cursor-pointer hover:bg-gray-800 border border-transparent hover:border-gray-600 transition active:scale-95";
+                    div.innerHTML = `
+                        <img src="${u.avatar || 'https://ui-avatars.com/api/?name='+u.username}" class="w-12 h-12 rounded-full bg-gray-700 object-cover">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-white text-base">${u.username}</h4>
+                            <p class="text-xs text-gray-400">${u.role}</p>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-gray-600"></i>
+                    `;
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        // --- MESSAGING ---
+        function getChatId(uid1, uid2) { return [uid1, uid2].sort().join("_"); }
+
+        function loadMessages(targetUid) {
+            const chatId = getChatId(auth.currentUser.uid, targetUid);
+            const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
+            
+            if(chatUnsub) chatUnsub();
+            
+            chatUnsub = onSnapshot(q, (snap) => {
+                const feed = document.getElementById('messagesFeed');
+                feed.innerHTML = '';
+                snap.forEach(d => {
+                    const m = d.data();
+                    const isMe = m.senderId === auth.currentUser.uid;
+                    
+                    const el = document.createElement('div');
+                    if(m.type === 'transfer') {
+                        el.className = "flex justify-center my-3";
+                        el.innerHTML = `<span class="text-xs bg-yellow-900/30 text-yellow-500 px-3 py-1 rounded-full border border-yellow-600/30">${m.amount} BLC Transfer</span>`;
+                    } else {
+                        el.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
+                        el.innerHTML = `<div class="p-3 max-w-[75%] text-sm text-white ${isMe ? 'msg-sent' : 'msg-received'}">${m.text}</div>`;
+                    }
+                    feed.appendChild(el);
+                });
+                setTimeout(() => feed.scrollTop = feed.scrollHeight, 100);
+            });
+        }
+
+        // --- ACTIONS ---
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('idNo').value;
+            const pass = document.getElementById('password').value;
+            try { await signInWithEmailAndPassword(auth, `${id}@bl.gov`, pass); } 
+            catch { showToast('Hata oluştu', 'error'); }
+        });
+
+        document.getElementById('msgForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inp = document.getElementById('msgInput');
+            const txt = inp.value.trim();
+            if(!txt || !activeChatUser) return;
+            inp.value = '';
+            
+            const chatId = getChatId(auth.currentUser.uid, activeChatUser.uid);
+            await addDoc(collection(db, "chats", chatId, "messages"), {
+                text: txt,
+                senderId: auth.currentUser.uid,
+                type: 'text',
+                createdAt: serverTimestamp()
+            });
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => signOut(auth));
+
+        // --- COIN & UTILS ---
+        window.toggleCoinModal = () => {
+            const m = document.getElementById('coinModal');
+            m.classList.toggle('hidden');
+        };
+
+        window.confirmTransfer = async () => {
+            const amt = parseInt(document.getElementById('coinAmount').value);
+            if(!amt || amt > currentUser.balance) return showToast('Yetersiz Bakiye', 'error');
+
+            const chatId = getChatId(auth.currentUser.uid, activeChatUser.uid);
+            toggleCoinModal();
+            document.getElementById('coinAmount').value = '';
+
+            try {
+                await runTransaction(db, async (txn) => {
+                    const senderRef = doc(db, "users", auth.currentUser.uid);
+                    const receiverRef = doc(db, "users", activeChatUser.uid);
+                    
+                    txn.update(senderRef, { balance: increment(-amt) });
+                    txn.update(receiverRef, { balance: increment(amt) });
+                    
+                    const msgRef = doc(collection(db, "chats", chatId, "messages"));
+                    txn.set(msgRef, {
+                        type: 'transfer',
+                        amount: amt,
+                        senderId: auth.currentUser.uid,
+                        createdAt: serverTimestamp()
+                    });
+                });
+                showToast('Gönderildi', 'success');
+            } catch(e) { console.log(e); }
+        };
+
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = `p-4 rounded-xl text-white font-bold text-center shadow-xl ${type==='error'?'bg-red-600':'bg-green-600'}`;
+            t.innerText = msg;
+            document.getElementById('toastContainer').appendChild(t);
+            setTimeout(() => t.remove(), 2500);
+        }
+    </script>
+</body>
+</html>
